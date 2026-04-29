@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="quiz">
+  <div class="site-shell quiz-shell quiz-page-compact">
+    <header class="quiz-hero">
+      <div class="quiz-title-block">
+        <a class="back-link" id="quizBackLink" href="index.html">← Back</a>
+        <p class="eyebrow" id="quizCategory">Category</p>
+        <h1 id="quizTitle">Quiz</h1>
+        <p class="subtle" id="quizDescription"></p>
+
+        <form id="answerForm" class="answer-form quiz-answer-form" autocomplete="off">
+          <input id="answerInput" type="text" placeholder="Type an answer" />
+        </form>
+
+        <button class="play-button" id="startBtn" type="button">Play Quiz</button>
+      </div>
+
+      <div class="quiz-stats-grid">
+        <div class="quiz-stat-box score-box">
+          <span>Score</span>
+          <strong><span id="correctCount">0</span><span class="score-divider">/</span><span id="totalCount">0</span></strong>
+        </div>
+
+        <div class="quiz-stat-box timer-box">
+          <span>Timer</span>
+          <strong id="timerDisplay">00:00</strong>
+        </div>
+
+        <div class="quiz-stat-box">
+          <span>Best</span>
+          <strong id="bestScore">0</strong>
+        </div>
+
+        <div class="quiz-stat-box">
+          <span>Played</span>
+          <strong id="timesPlayed">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <main class="quiz-main-compact">
+      <section class="quiz-map-section" id="mapQuizSection">
+        <div class="map-stage compact-map-stage" id="mapStage">
+          <div class="quiz-map-inner" id="quizMapInner">
+            <img id="quizImage" alt="Quiz visual" />
+            <div id="labelLayer"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="quiz-table-section hidden" id="tableQuizSection">
+        <div class="quiz-table" id="quizTable"></div>
+      </section>
+
+      <section class="quiz-bottom-grid quiz-bottom-grid-simple">
+        <div class="quiz-bottom-card found-card">
+          <div class="list-header split-row">
+            <h3>Right answers</h3>
+            <span id="remainingCount">0 remaining</span>
+          </div>
+
+          <div class="progress-shell compact-progress">
+            <div class="progress-fill" id="quizProgressBar"></div>
+          </div>
+
+          <div class="found-answers" id="foundAnswers"></div>
+        </div>
+
+        <div class="quiz-actions-small">
+          <button class="pause-button" id="pauseBtn" type="button" disabled>Pause</button>
+          <button class="end-button" id="endBtn" type="button" disabled>End</button>
+        </div>
+      </section>
+    </main>
+  </div>
+  
+  <div class="pause-overlay hidden" id="pauseOverlay">
+    <div class="pause-modal">
+      <h2>Quiz Paused</h2>
+      <p>The map is hidden while paused.</p>
+      <button id="resumeBtn" type="button">Play</button>
+    </div>
+  </div>
+
+  <script src="quizzes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Site</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="home">
+  <div class="site-shell">  
+    <header class="site-header clean-header">
+      <div>
+        <p class="eyebrow">Your library</p>
+        <h1>Quiz Site</h1>
+      </div>
+
+      <div class="button-row wrap-row">
+        <a class="primary-link header-link" href="add-quizzes.html">Add Quizzes</a>
+        <a class="ghost-button header-link" href="builder.html">Builder</a>
+        <a class="ghost-button header-link" href="plan.txt" target="_blank" rel="noopener">To Do</a>
+      </div>
+    </header>
+
+    <main class="main-grid narrow-gap">
+      <section class="panel overall-panel">
+        <div class="panel-head split-row">
+          <div>
+            <p class="eyebrow">Overall progress</p>
+            <h2>Combined completion</h2>
+          </div>
+          <div class="stat-chip" id="overallProgressText">0%</div>
+        </div>
+
+        <div class="progress-shell large-progress">
+          <div class="progress-fill" id="overallProgressBar"></div>
+        </div>
+
+        <div class="overview-stats" id="overallStats"></div>
+      </section>
+
+      <section>
+        <div class="section-title-row">
+          <h2>Categories</h2>
+          <span class="subtle" id="homeCategorySummary"></span>
+        </div>
+        <div class="category-grid" id="categoryGrid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="quizzes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

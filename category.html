@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Category</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="category">
+  <div class="site-shell">
+    <header class="site-header compact-header">
+      <div>
+        <a class="back-link" href="index.html">← Back to library</a>
+        <p class="eyebrow" id="categoryLabel">Category</p>
+        <h1 id="categoryTitle">Quizzes</h1>
+        <p class="subtle" id="categoryDescription"></p>
+      </div>
+      <div class="button-row wrap-row">
+        <a class="ghost-button header-link" href="add-quizzes.html">Add Quizzes</a>
+      </div>
+    </header>
+
+    <main class="main-grid">
+      <section class="panel">
+        <div class="quiz-list" id="quizList"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="quizzes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

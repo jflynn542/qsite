@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Quizzes</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="marketplace">
+  <div class="site-shell">
+    <header class="site-header compact-header">
+      <div>
+        <a class="back-link" href="index.html">← Back to library</a>
+        <p class="eyebrow">Catalogue</p>
+        <h1>Add</h1>
+        <p class="subtle">Browse all quizzes</p>
+      </div>
+    </header>
+
+    <main class="main-grid narrow-gap">
+      <section class="panel marketplace-toolbar">
+        <div class="marketplace-controls">
+          <label class="field-block grow-field">
+            <span>Search</span>
+            <input id="marketplaceSearchInput" type="text" placeholder="Search by title or description" />
+          </label>
+          <label class="field-block category-filter-field">
+            <span>Category</span>
+            <select id="marketplaceCategoryFilter"></select>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-title-row">
+          <h2>Available</h2>
+          <span class="subtle" id="marketplaceSummary"></span>
+        </div>
+        <div class="quiz-list" id="marketplaceQuizList"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="quizzes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
