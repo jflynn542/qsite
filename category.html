@@ -15,9 +15,13 @@
         <h1 id="categoryTitle">Quizzes</h1>
         <p class="subtle" id="categoryDescription"></p>
       </div>
-      <div class="button-row wrap-row">
-        <a class="ghost-button header-link" href="add-quizzes.html">Add Quizzes</a>
-      </div>
+        <div class="button-row wrap-row">
+          <a class="ghost-button header-link" href="add-quizzes.html">Add Quizzes</a>
+
+          <a id="accountLink" class="ghost-button header-link" href="my-account.html" style="display:none;">My Account</a>
+          <button id="loginBtn" class="primary-link header-link" type="button">Sign in</button>
+          <button id="logoutBtn" class="ghost-button header-link" type="button" style="display:none;">Sign Out</button>
+        </div>
     </header>
 
     <main class="main-grid">
@@ -29,5 +33,6 @@
 
   <script src="quizzes.js"></script>
   <script src="app.js"></script>
+  <script type="module" src="js/auth.js"></script>
 </body>
 </html>
