@@ -4,7 +4,30 @@ const AUTO_ADDED_STORAGE_KEY = "quizHubAutoAdded";
 const CUSTOM_QUIZZES_STORAGE_KEY = "quizHubCustomQuizzes";
 const DELETED_QUIZZES_STORAGE_KEY = "quizHubDeletedQuizzes";
 const DELETE_QUIZ_PASSWORD = "delete";
- 
+
+let sharedQuizzes = [];
+
+async function loadSharedQuizzes() {
+  try {
+    const { db } = await import("./js/firebase-config.js");
+
+    const {
+      collection,
+      getDocs
+    } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+
+    const snapshot = await getDocs(collection(db, "sharedQuizzes"));
+
+    sharedQuizzes = snapshot.docs.map((doc) => ({
+      ...doc.data(),
+      id: doc.id
+    }));
+  } catch (error) {
+    console.error("Could not load shared quizzes:", error);
+    sharedQuizzes = [];
+  }
+}
+
 function getStats() {
   return JSON.parse(localStorage.getItem(STATS_STORAGE_KEY) || "{}");
 }
@@ -35,9 +58,14 @@ function setDeletedQuizIds(ids) {
 }
 
 function getAllQuizzes() {
-  const customQuizzes = getCustomQuizzes();
+  const localCustomQuizzes = getCustomQuizzes();
+  const onlineCustomQuizzes = sharedQuizzes;
+
+  const customQuizzes = [...localCustomQuizzes, ...onlineCustomQuizzes];
+
   const customIds = new Set(customQuizzes.map((quiz) => quiz.id));
   const deletedIds = new Set(getDeletedQuizIds());
+
   return [...quizzes.filter((quiz) => !customIds.has(quiz.id)), ...customQuizzes]
     .filter((quiz) => !deletedIds.has(quiz.id));
 }
@@ -177,7 +205,7 @@ function createQuizCardMarkup(quiz, options = {}) {
         <div class="quiz-row-main">
           <h3>${quiz.title}</h3>
           <p>${quiz.description || "Timed text-input quiz."}</p>
-        </div>
+          ${quiz.createdByName ? `<p class="subtle">Created by ${quiz.createdByName}</p>` : ""}        </div>
         <div class="quiz-row-stats">
           <span class="quiz-row-stat"><strong>${quiz.answers.length}</strong><small>Answers</small></span>
           <span class="quiz-row-stat"><strong>${quiz.timeLimit}s</strong><small>Timer</small></span>
@@ -632,9 +660,13 @@ function renderQuizPage() {
   updateDisplay();
 }
 
-function initPage() {
+async function initPage() {
+  await loadSharedQuizzes();
+
   syncAutoAddedQuizzes();
+
   const page = document.body.dataset.page;
+
   if (page === "home") renderHomePage();
   if (page === "marketplace") renderMarketplacePage();
   if (page === "category") renderCategoryPage();
