@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Account</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="site-shell">
+    <header class="site-header compact-header">
+      <div>
+        <a class="back-link" href="index.html">← Back to library</a>
+        <p class="eyebrow">Account</p>
+        <h1>My Account</h1>
+        <p class="subtle">View your profile and saved quiz stats.</p>
+      </div>
+
+      <div class="button-row wrap-row">
+        <button id="logoutBtn" class="ghost-button header-link" type="button">Sign Out</button>
+      </div>
+    </header>
+
+    <main class="main-grid narrow-gap">
+      <section class="panel">
+        <div id="accountBox">
+          <p>Loading account...</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="js/account.js"></script>
+</body>
+</html>
