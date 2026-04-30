@@ -1,4 +1,5 @@
 import { auth, provider } from "./firebase-config.js";
+
 import {
   signInWithPopup,
   signOut,
@@ -11,8 +12,14 @@ const accountLink = document.getElementById("accountLink");
 
 if (loginBtn) {
   loginBtn.addEventListener("click", async () => {
-    await signInWithPopup(auth, provider);
-    window.location.href = "my-account.html";
+    try {
+      const result = await signInWithPopup(auth, provider);
+      console.log("Signed in:", result.user);
+      window.location.href = "my-account.html";
+    } catch (error) {
+      console.error("Google sign-in failed:", error);
+      alert(error.message);
+    }
   });
 }
 
