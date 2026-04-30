@@ -4,7 +4,7 @@ const AUTO_ADDED_STORAGE_KEY = "quizHubAutoAdded";
 const CUSTOM_QUIZZES_STORAGE_KEY = "quizHubCustomQuizzes";
 const DELETED_QUIZZES_STORAGE_KEY = "quizHubDeletedQuizzes";
 const DELETE_QUIZ_PASSWORD = "delete";
-
+ 
 function getStats() {
   return JSON.parse(localStorage.getItem(STATS_STORAGE_KEY) || "{}");
 }
