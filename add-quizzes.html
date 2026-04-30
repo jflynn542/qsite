@@ -15,6 +15,12 @@
         <h1>Add</h1>
         <p class="subtle">Browse all quizzes</p>
       </div>
+
+      <div class="button-row wrap-row">
+        <a id="accountLink" class="ghost-button header-link" href="my-account.html" style="display:none;">My Account</a>
+        <button id="loginBtn" class="primary-link header-link" type="button">Sign in</button>
+        <button id="logoutBtn" class="ghost-button header-link" type="button" style="display:none;">Sign Out</button>
+      </div>
     </header>
 
     <main class="main-grid narrow-gap">
@@ -43,5 +49,6 @@
 
   <script src="quizzes.js"></script>
   <script src="app.js"></script>
+  <script type="module" src="js/auth.js"></script>
 </body>
 </html>
