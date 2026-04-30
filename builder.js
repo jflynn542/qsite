@@ -328,18 +328,40 @@ function renderBuilderPage() {
     return quiz;
   }
 
-  function saveCreatedQuiz() {
+  async function saveCreatedQuiz() {
     const quiz = getQuizObject();
+
     if (!quiz.id || !quiz.answers.length) {
       window.alert("Add a quiz title/id and at least one answer before creating the quiz.");
       return;
     }
 
-    const current = JSON.parse(localStorage.getItem(CUSTOM_QUIZZES_STORAGE_KEY) || "[]");
-    const withoutExisting = Array.isArray(current) ? current.filter((item) => item.id !== quiz.id) : [];
-    withoutExisting.push(quiz);
-    localStorage.setItem(CUSTOM_QUIZZES_STORAGE_KEY, JSON.stringify(withoutExisting));
-    window.alert("Quiz created. It is now available in Add Quizzes.");
+    const { auth, db } = await import("./js/firebase-config.js");
+
+    const {
+      doc,
+      setDoc,
+      serverTimestamp
+    } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+
+    const user = auth.currentUser;
+
+    if (!user) {
+      window.alert("You must be signed in to create and upload quizzes.");
+      return;
+    }
+
+    const onlineQuiz = {
+      ...quiz,
+      createdBy: user.uid,
+      createdByName: user.displayName || "Unknown user",
+      createdByEmail: user.email || "",
+      createdAt: serverTimestamp()
+    };
+
+    await setDoc(doc(db, "sharedQuizzes", quiz.id), onlineQuiz);
+
+    window.alert("Quiz uploaded online. Other users can now access it.");
   }
 
   function syncUI() {
