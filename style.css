@@ -1270,3 +1270,33 @@ h3 { font-size: 1.05rem; font-weight: 800; }
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================
+   Map placeholder images
+   ========================= */
+
+.map-placeholder-image {
+  position: absolute;
+  width: var(--quiz-placeholder-size, 18px);
+  height: var(--quiz-placeholder-size, 18px);
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.builder-placeholder-preview {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--builder-placeholder-size, 18px);
+  height: var(--builder-placeholder-size, 18px);
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.builder-marker::before {
+  opacity: 0;
+}
