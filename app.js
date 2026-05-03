@@ -369,17 +369,13 @@ function renderMarketplacePage() {
       return;
     }
 
-    list.innerHTML = filtered.map((quiz) => {
-      const isOwner = quiz.createdBy; // only show edit if it's a custom/shared quiz
-    
-      return createQuizCardMarkup(quiz, {
-        actionHtml: `
-          <button class="primary-link add-remove-button" type="button" data-add-quiz="${quiz.id}">Add to library</button>
-          ${isOwner ? `<button class="ghost-button add-remove-button" type="button" data-edit-quiz="${quiz.id}">Edit</button>` : ""}
-          <button class="ghost-button danger-button add-remove-button" type="button" data-delete-quiz="${quiz.id}">Delete</button>
-        `
-      });
-    }).join("");
+    list.innerHTML = filtered.map((quiz) => createQuizCardMarkup(quiz, {
+      actionHtml: `
+        <button class="primary-link add-remove-button" type="button" data-add-quiz="${quiz.id}">Add to library</button>
+        ${isEditableQuiz(quiz.id) ? `<button class="ghost-button add-remove-button" type="button" data-edit-quiz="${quiz.id}">Edit</button>` : ""}
+        <button class="ghost-button danger-button add-remove-button" type="button" data-delete-quiz="${quiz.id}">Delete</button>
+      `
+    })).join("");
 
     attachLibraryActionHandlers(list);
     attachEditQuizHandlers(list);
@@ -388,18 +384,7 @@ function renderMarketplacePage() {
 
   searchInput.addEventListener("input", draw);
   categoryFilter.addEventListener("change", draw);
-  draw(attachLibraryActionHandlers(list);
-  attachMarketplaceDeleteHandlers(list);
-  attachEditHandlers(list);
-  }
-
-function attachEditHandlers(scope = document) {
-  scope.querySelectorAll("[data-edit-quiz]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const quizId = button.dataset.editQuiz;
-      window.location.href = `builder.html?edit=${quizId}`;
-    });
-  });
+  draw();
 }
 
 function renderCategoryPage() {
