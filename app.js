@@ -74,12 +74,24 @@ function getQuizById(id) {
   return getAllQuizzes().find((quiz) => quiz.id === id);
 }
 
-function isCustomQuiz(id) {
+function isLocalCustomQuiz(id) {
   return getCustomQuizzes().some((quiz) => quiz.id === id);
 }
 
+function isSharedQuiz(id) {
+  return sharedQuizzes.some((quiz) => quiz.id === id);
+}
+
+function isEditableQuiz(id) {
+  return isLocalCustomQuiz(id) || isSharedQuiz(id);
+}
+
+function goToQuizEditor(id) {
+  window.location.href = `builder.html?edit=${encodeURIComponent(id)}`;
+}
+
 function deleteQuizFromCatalogue(id) {
-  if (isCustomQuiz(id)) {
+  if (isLocalCustomQuiz(id)) {
     setCustomQuizzes(getCustomQuizzes().filter((quiz) => quiz.id !== id));
   } else {
     setDeletedQuizIds([...getDeletedQuizIds(), id]);
@@ -298,6 +310,14 @@ function renderHomePage() {
 }
 
 
+function attachEditQuizHandlers(scope = document) {
+  scope.querySelectorAll("[data-edit-quiz]").forEach((button) => {
+    button.addEventListener("click", () => {
+      goToQuizEditor(button.dataset.editQuiz);
+    });
+  });
+}
+
 function attachMarketplaceDeleteHandlers(scope = document) {
   scope.querySelectorAll("[data-delete-quiz]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -352,11 +372,13 @@ function renderMarketplacePage() {
     list.innerHTML = filtered.map((quiz) => createQuizCardMarkup(quiz, {
       actionHtml: `
         <button class="primary-link add-remove-button" type="button" data-add-quiz="${quiz.id}">Add to library</button>
+        ${isEditableQuiz(quiz.id) ? `<button class="ghost-button add-remove-button" type="button" data-edit-quiz="${quiz.id}">Edit</button>` : ""}
         <button class="ghost-button danger-button add-remove-button" type="button" data-delete-quiz="${quiz.id}">Delete</button>
       `
     })).join("");
 
     attachLibraryActionHandlers(list);
+    attachEditQuizHandlers(list);
     attachMarketplaceDeleteHandlers(list);
   }
 
@@ -390,10 +412,14 @@ function renderCategoryPage() {
   }
 
   list.innerHTML = categoryQuizzes.map((quiz) => createQuizCardMarkup(quiz, {
-    actionHtml: `<button class="ghost-button add-remove-button" type="button" data-remove-quiz="${quiz.id}">Remove</button>`
+    actionHtml: `
+      ${isEditableQuiz(quiz.id) ? `<button class="ghost-button add-remove-button" type="button" data-edit-quiz="${quiz.id}">Edit</button>` : ""}
+      <button class="ghost-button add-remove-button" type="button" data-remove-quiz="${quiz.id}">Remove</button>
+    `
   })).join("");
 
   attachLibraryActionHandlers(list);
+  attachEditQuizHandlers(list);
 }
 
 function renderQuizPage() {
