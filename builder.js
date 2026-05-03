@@ -247,6 +247,10 @@ async function renderBuilderPage() {
       ? `\n  image: ${formatJsValue(state.imagePath || "assets/your-map.png")},`
       : `\n  image: "",`;
 
+    const placeholderLine = state.quizType === "map"
+      ? `\n  placeholderImage: "assets/placeholder.png",\n  placeholderSize: ${Number(state.defaultPlaceholderSize) || 18},`
+      : "";
+
     const tableColumnsLine = state.quizType === "table"
       ? `\n  tableColumns: ${Math.min(8, Math.max(1, Number(state.tableColumns) || 2))},`
       : "";
