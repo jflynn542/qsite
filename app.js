@@ -521,12 +521,26 @@ function renderQuizPage() {
 
     labelLayer.innerHTML = quiz.answers
       .map((entry) => {
+        if (typeof entry.x !== "number" || typeof entry.y !== "number") return "";
+
         const isFound = found.includes(entry.answer);
-
-        if (!isFound && !finished) return "";
-
         const labelSize = typeof entry.labelSize === "number" ? entry.labelSize : 12;
         const dotSize = typeof entry.dotSize === "number" ? entry.dotSize : 10;
+        const placeholderSize = typeof entry.placeholderSize === "number"
+          ? entry.placeholderSize
+          : (typeof quiz.placeholderSize === "number" ? quiz.placeholderSize : 18);
+        const placeholderImage = quiz.placeholderImage || "assets/placeholder.png";
+
+        if (!isFound && !finished) {
+          return `
+            <img
+              class="map-placeholder-image"
+              src="${placeholderImage}"
+              alt=""
+              style="left:${entry.x}%; top:${entry.y}%; --quiz-placeholder-size:${placeholderSize}px;"
+            />
+          `;
+        }
 
         const labelClass = isFound ? "map-label" : "map-label missed-answer";
 
