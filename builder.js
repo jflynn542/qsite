@@ -23,6 +23,7 @@ function defaultBuilderState() {
     selectedIndex: -1,
     defaultLabelSize: 12,
     defaultDotSize: 10,
+    defaultPlaceholderSize: 18,
     tableColumns: 2,
     editingQuizId: "",
     editingSource: ""
@@ -93,6 +94,7 @@ function quizToBuilderState(quiz, source = "shared") {
     selectedIndex: 0,
     defaultLabelSize: 12,
     defaultDotSize: 10,
+    defaultPlaceholderSize: Number(quiz.placeholderSize) || 18,
     tableColumns: Math.min(8, Math.max(1, Number(quiz.tableColumns) || 2)),
     editingQuizId: quiz.id || "",
     editingSource: source
@@ -139,6 +141,7 @@ async function renderBuilderPage() {
   const answerSelect = document.getElementById("answerSelect");
   const labelSizeInput = document.getElementById("labelSizeInput");
   const dotSizeInput = document.getElementById("dotSizeInput");
+  const placeholderSizeInput = document.getElementById("placeholderSizeInput");
   const answerList = document.getElementById("builderAnswerList");
   const placedCount = document.getElementById("placedCount");
   const answerCount = document.getElementById("answerCount");
@@ -166,6 +169,7 @@ async function renderBuilderPage() {
   state.quizType = state.quizType || "map";
   state.defaultLabelSize = state.defaultLabelSize || 12;
   state.defaultDotSize = state.defaultDotSize || 10;
+  state.defaultPlaceholderSize = state.defaultPlaceholderSize || 18;
   state.tableColumns = Math.min(8, Math.max(1, Number(state.tableColumns) || 2));
 
   function ensureSelectedIndex() {
@@ -227,6 +231,10 @@ async function renderBuilderPage() {
           parts.push(`dotSize: ${entry.dotSize}`);
         }
 
+        if (state.quizType === "map" && typeof entry.placeholderSize === "number") {
+          parts.push(`placeholderSize: ${entry.placeholderSize}`);
+        }
+
         return `  { ${parts.join(", ")} }`;
       })
       .join(",\n")}\n]`;
@@ -251,7 +259,7 @@ async function renderBuilderPage() {
     description: ${formatJsValue(
       state.description || "Type as many answers as you can before time runs out."
     )},
-    timeLimit: ${Number(state.timeLimit) || 180},${imageLine}${tableColumnsLine}
+    timeLimit: ${Number(state.timeLimit) || 180},${imageLine}${placeholderLine}${tableColumnsLine}
     answers: ${buildAnswersExport().replace(/\n/g, "\n  ").trimStart()}
   }`;
   }
@@ -267,15 +275,17 @@ async function renderBuilderPage() {
       .map((entry, index) => {
         const labelSize = typeof entry.labelSize === "number" ? entry.labelSize : state.defaultLabelSize;
         const dotSize = typeof entry.dotSize === "number" ? entry.dotSize : state.defaultDotSize;
+        const placeholderSize = typeof entry.placeholderSize === "number" ? entry.placeholderSize : state.defaultPlaceholderSize;
 
         return `
           <button
             class="builder-marker${index === state.selectedIndex ? " active" : ""}"
-            style="left:${entry.x}%; top:${entry.y}%; --builder-label-size:${labelSize}px; --builder-dot-size:${dotSize}px;"
+            style="left:${entry.x}%; top:${entry.y}%; --builder-label-size:${labelSize}px; --builder-dot-size:${dotSize}px; --builder-placeholder-size:${placeholderSize}px;"
             data-index="${index}"
             type="button"
             title="${entry.answer}"
           >
+            <img class="builder-placeholder-preview" src="assets/placeholder.png" alt="" />
             <span>${entry.answer}</span>
           </button>
         `;
@@ -318,7 +328,7 @@ async function renderBuilderPage() {
         : "Table answer";
 
       const secondPill = state.quizType === "map"
-        ? `Text ${entry.labelSize || state.defaultLabelSize}px · Dot ${entry.dotSize || state.defaultDotSize}px`
+        ? `Text ${entry.labelSize || state.defaultLabelSize}px · Placeholder ${entry.placeholderSize || state.defaultPlaceholderSize}px`
         : `${Math.min(8, Math.max(1, Number(state.tableColumns) || 2))} columns`;
 
       return `
@@ -392,10 +402,16 @@ async function renderBuilderPage() {
           if (typeof entry.y === "number") cleanEntry.y = entry.y;
           cleanEntry.labelSize = typeof entry.labelSize === "number" ? entry.labelSize : state.defaultLabelSize;
           cleanEntry.dotSize = typeof entry.dotSize === "number" ? entry.dotSize : state.defaultDotSize;
+          cleanEntry.placeholderSize = typeof entry.placeholderSize === "number" ? entry.placeholderSize : state.defaultPlaceholderSize;
         }
         return cleanEntry;
       })
     };
+
+    if (state.quizType === "map") {
+      quiz.placeholderImage = "assets/placeholder.png";
+      quiz.placeholderSize = Number(state.defaultPlaceholderSize) || 18;
+    }
 
     if (state.quizType === "table") {
       quiz.tableColumns = Math.min(8, Math.max(1, Number(state.tableColumns) || 2));
@@ -501,6 +517,7 @@ async function renderBuilderPage() {
     if (tableColumnsInput) tableColumnsInput.value = Math.min(8, Math.max(1, Number(state.tableColumns) || 2));
     labelSizeInput.value = state.defaultLabelSize || 12;
     dotSizeInput.value = state.defaultDotSize || 10;
+    if (placeholderSizeInput) placeholderSizeInput.value = state.defaultPlaceholderSize || 18;
 
     const isTableQuiz = state.quizType === "table";
     if (mapImageSection) mapImageSection.classList.toggle("builder-map-disabled", isTableQuiz);
@@ -567,6 +584,7 @@ async function renderBuilderPage() {
     if (state.quizType === "map") {
       entry.labelSize = state.defaultLabelSize || 12;
       entry.dotSize = state.defaultDotSize || 10;
+      entry.placeholderSize = state.defaultPlaceholderSize || 18;
     }
 
     state.answers.push(entry);
@@ -639,6 +657,19 @@ async function renderBuilderPage() {
     syncUI();
   });
 
+  if (placeholderSizeInput) {
+    placeholderSizeInput.addEventListener("input", () => {
+      const value = Number(placeholderSizeInput.value) || 18;
+      state.defaultPlaceholderSize = value;
+
+      if (state.selectedIndex >= 0 && state.answers[state.selectedIndex]) {
+        state.answers[state.selectedIndex].placeholderSize = value;
+      }
+
+      syncUI();
+    });
+  }
+
   timeLimitInput.addEventListener("input", () => {
     state.timeLimit = Number(timeLimitInput.value) || 180;
     syncUI();
@@ -704,6 +735,7 @@ async function renderBuilderPage() {
     state.answers[state.selectedIndex].y = y;
     state.answers[state.selectedIndex].labelSize = state.defaultLabelSize || 12;
     state.answers[state.selectedIndex].dotSize = state.defaultDotSize || 10;
+    state.answers[state.selectedIndex].placeholderSize = state.defaultPlaceholderSize || 18;
 
     const nextIndex = state.answers.findIndex(
       (entry) => typeof entry.x !== "number" || typeof entry.y !== "number"
@@ -734,6 +766,7 @@ async function renderBuilderPage() {
     state.quizType = "map";
     state.defaultLabelSize = 12;
     state.defaultDotSize = 10;
+    state.defaultPlaceholderSize = 18;
     state.tableColumns = 2;
     state.editingQuizId = "";
     state.editingSource = "";
@@ -759,4 +792,3 @@ async function renderBuilderPage() {
 }
 
 renderBuilderPage();
- 
