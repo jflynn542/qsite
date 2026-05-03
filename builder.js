@@ -23,7 +23,9 @@ function defaultBuilderState() {
     selectedIndex: -1,
     defaultLabelSize: 12,
     defaultDotSize: 10,
-    tableColumns: 2
+    tableColumns: 2,
+    editingQuizId: "",
+    editingSource: ""
   };
 }
 
@@ -46,6 +48,72 @@ function saveBuilderState(state) {
   localStorage.setItem(BUILDER_STORAGE_KEY, JSON.stringify(state));
 }
 
+async function getSharedQuizForEditing(quizId) {
+  const { db } = await import("./js/firebase-config.js");
+  const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+
+  const quizSnap = await getDoc(doc(db, "sharedQuizzes", quizId));
+  if (!quizSnap.exists()) return null;
+  return { ...quizSnap.data(), id: quizSnap.id };
+}
+
+function getLocalQuizForEditing(quizId) {
+  try {
+    const customQuizzes = JSON.parse(localStorage.getItem(CUSTOM_QUIZZES_STORAGE_KEY) || "[]");
+    if (Array.isArray(customQuizzes)) {
+      const customQuiz = customQuizzes.find((quiz) => quiz.id === quizId);
+      if (customQuiz) return { ...customQuiz, source: "local" };
+    }
+  } catch {
+    // Ignore broken localStorage data.
+  }
+
+  if (typeof quizzes !== "undefined") {
+    const builtInQuiz = quizzes.find((quiz) => quiz.id === quizId);
+    if (builtInQuiz) return { ...builtInQuiz, source: "built-in" };
+  }
+
+  return null;
+}
+
+function quizToBuilderState(quiz, source = "shared") {
+  const quizType = quiz.type || quiz.quizType || "map";
+
+  return {
+    ...defaultBuilderState(),
+    quizId: quiz.id || "",
+    categoryId: quiz.categoryId || "Other",
+    title: quiz.title || "",
+    description: quiz.description || "",
+    timeLimit: Number(quiz.timeLimit) || 180,
+    quizType,
+    imagePath: quiz.image || quiz.imagePath || "",
+    imagePreview: quiz.image || quiz.imagePath || "",
+    answers: Array.isArray(quiz.answers) ? JSON.parse(JSON.stringify(quiz.answers)) : [],
+    selectedIndex: 0,
+    defaultLabelSize: 12,
+    defaultDotSize: 10,
+    tableColumns: Math.min(8, Math.max(1, Number(quiz.tableColumns) || 2)),
+    editingQuizId: quiz.id || "",
+    editingSource: source
+  };
+}
+
+async function loadQuizFromEditUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const editId = params.get("edit");
+  if (!editId) return null;
+
+  const localQuiz = getLocalQuizForEditing(editId);
+  if (localQuiz) return quizToBuilderState(localQuiz, localQuiz.source || "local");
+
+  const sharedQuiz = await getSharedQuizForEditing(editId);
+  if (sharedQuiz) return quizToBuilderState(sharedQuiz, "shared");
+
+  window.alert("Could not find that quiz to edit.");
+  return null;
+}
+
 function normaliseAliases(text) {
   return text
     .split(",")
@@ -53,7 +121,7 @@ function normaliseAliases(text) {
     .filter(Boolean);
 }
 
-function renderBuilderPage() {
+async function renderBuilderPage() {
   const page = document.body.dataset.page;
   if (page !== "builder") return;
 
@@ -85,8 +153,16 @@ function renderBuilderPage() {
   const builderMapPanel = document.getElementById("builderMapPanel");
   const builderTablePreview = document.getElementById("builderTablePreview");
   const createQuizBtn = document.getElementById("createQuizBtn");
+  const builderModeText = document.getElementById("builderModeText");
 
   let state = loadBuilderState();
+
+  const editState = await loadQuizFromEditUrl();
+  if (editState) {
+    state = editState;
+    saveBuilderState(state);
+  }
+
   state.quizType = state.quizType || "map";
   state.defaultLabelSize = state.defaultLabelSize || 12;
   state.defaultDotSize = state.defaultDotSize || 10;
@@ -332,7 +408,40 @@ function renderBuilderPage() {
     const quiz = getQuizObject();
 
     if (!quiz.id || !quiz.answers.length) {
-      window.alert("Add a quiz title/id and at least one answer before creating the quiz.");
+      window.alert("Add a quiz title/id and at least one answer before saving the quiz.");
+      return;
+    }
+
+    if (state.editingSource === "built-in") {
+      const customQuizzes = JSON.parse(localStorage.getItem(CUSTOM_QUIZZES_STORAGE_KEY) || "[]");
+      const updatedQuiz = { ...quiz, id: state.editingQuizId || quiz.id, editedFromBuiltIn: true };
+      const existingIndex = customQuizzes.findIndex((item) => item.id === updatedQuiz.id);
+      if (existingIndex >= 0) {
+        customQuizzes[existingIndex] = updatedQuiz;
+      } else {
+        customQuizzes.push(updatedQuiz);
+      }
+      localStorage.setItem(CUSTOM_QUIZZES_STORAGE_KEY, JSON.stringify(customQuizzes));
+      window.alert("Built-in quiz edited as a local custom copy.");
+      window.location.href = "add-quizzes.html";
+      return;
+    }
+
+    if (state.editingSource === "local") {
+      const customQuizzes = JSON.parse(localStorage.getItem(CUSTOM_QUIZZES_STORAGE_KEY) || "[]");
+      const originalId = state.editingQuizId || quiz.id;
+      const updatedQuiz = { ...quiz, id: originalId };
+      const existingIndex = customQuizzes.findIndex((item) => item.id === originalId);
+
+      if (existingIndex >= 0) {
+        customQuizzes[existingIndex] = updatedQuiz;
+      } else {
+        customQuizzes.push(updatedQuiz);
+      }
+
+      localStorage.setItem(CUSTOM_QUIZZES_STORAGE_KEY, JSON.stringify(customQuizzes));
+      window.alert("Quiz updated locally.");
+      window.location.href = "add-quizzes.html";
       return;
     }
 
@@ -340,6 +449,7 @@ function renderBuilderPage() {
 
     const {
       doc,
+      getDoc,
       setDoc,
       serverTimestamp
     } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
@@ -351,17 +461,31 @@ function renderBuilderPage() {
       return;
     }
 
+    const originalId = state.editingQuizId || quiz.id;
+    const quizRef = doc(db, "sharedQuizzes", originalId);
+    const existingSnap = await getDoc(quizRef);
+    const existingData = existingSnap.exists() ? existingSnap.data() : null;
+
+    if (existingData && existingData.createdBy && existingData.createdBy !== user.uid) {
+      window.alert("You can only edit quizzes that were uploaded by your own account.");
+      return;
+    }
+
     const onlineQuiz = {
       ...quiz,
-      createdBy: user.uid,
-      createdByName: user.displayName || "Unknown user",
-      createdByEmail: user.email || "",
-      createdAt: serverTimestamp()
+      id: originalId,
+      createdBy: existingData?.createdBy || user.uid,
+      createdByName: existingData?.createdByName || user.displayName || "Unknown user",
+      createdByEmail: existingData?.createdByEmail || user.email || "",
+      createdAt: existingData?.createdAt || serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      updatedBy: user.uid
     };
 
-    await setDoc(doc(db, "sharedQuizzes", quiz.id), onlineQuiz);
+    await setDoc(quizRef, onlineQuiz, { merge: true });
 
-    window.alert("Quiz uploaded online. Other users can now access it.");
+    window.alert(state.editingQuizId ? "Quiz updated online." : "Quiz uploaded online. Other users can now access it.");
+    window.location.href = "add-quizzes.html";
   }
 
   function syncUI() {
@@ -411,6 +535,20 @@ function renderBuilderPage() {
 
     answersExport.value = buildAnswersExport();
     quizExport.value = buildQuizObjectExport();
+    if (builderModeText) {
+      if (state.editingQuizId) {
+        builderModeText.textContent = state.editingSource === "built-in"
+          ? "Editing a built-in quiz. This will save as a custom copy."
+          : `Editing: ${state.title || state.editingQuizId}`;
+      } else {
+        builderModeText.textContent = "Saves the quiz into Add Quizzes automatically.";
+      }
+    }
+
+    if (createQuizBtn) {
+      createQuizBtn.textContent = state.editingQuizId ? "Save changes" : "Create quiz";
+    }
+
     saveBuilderState(state);
   }
 
@@ -597,6 +735,9 @@ function renderBuilderPage() {
     state.defaultLabelSize = 12;
     state.defaultDotSize = 10;
     state.tableColumns = 2;
+    state.editingQuizId = "";
+    state.editingSource = "";
+    window.history.replaceState({}, "", "builder.html");
     syncUI();
   });
 
