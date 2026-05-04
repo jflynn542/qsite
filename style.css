@@ -6,7 +6,7 @@
   --text: #111111;
   --muted: #6f6f6f;
   --line: #d6d6d6;
-  --line-strong:a #bcbcbc;
+  --line-strong: #bcbcbc;
   --accent: #ff9f00;
   --accent-deep: #d88600;
   --accent-soft: #fff2d8;
@@ -1158,16 +1158,20 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   font-size: 0.78rem;
 }
 
-/* Table quiz columns */
+/* Table quiz columns with hint + answer pairs */
 .quiz-table-section {
-  width: min(900px, 100%);
+  width: min(1100px, 100%);
 }
 
 .quiz-table {
   display: grid;
-  grid-template-columns: repeat(var(--quiz-table-columns, 2), minmax(120px, 1fr));
+  grid-template-columns: repeat(var(--quiz-table-columns, 2), minmax(220px, 1fr));
+  border-top: 1px solid var(--line-strong);
+  border-left: 1px solid var(--line-strong);
+  background: #fff;
 }
 
+.quiz-table .table-hint-cell,
 .quiz-table .table-answer-cell {
   min-height: 42px;
   border-right: 1px solid var(--line-strong);
@@ -1175,8 +1179,18 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   padding: 10px 12px;
   display: flex;
   align-items: center;
-  font-weight: 800;
+}
+
+.quiz-table .table-hint-cell {
+  background: #f7f7f7;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.quiz-table .table-answer-cell {
   background: #fff;
+  color: var(--text);
+  font-weight: 800;
 }
 
 .quiz-table .table-answer-cell.found {
@@ -1187,6 +1201,38 @@ h3 { font-size: 1.05rem; font-weight: 800; }
 .quiz-table .table-answer-cell.missed {
   background: #fff5f5;
   color: var(--danger);
+}
+
+.builder-table-preview {
+  grid-template-columns: repeat(var(--builder-table-columns, 2), minmax(220px, 1fr));
+}
+
+.builder-table-hint-cell,
+.builder-table-cell,
+.builder-table-empty {
+  min-height: 38px;
+  border-right: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  padding: 9px 10px;
+  display: flex;
+  align-items: center;
+}
+
+.builder-table-hint-cell {
+  background: #f7f7f7;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.builder-table-cell {
+  font-weight: 800;
+  background: #fff;
+}
+
+.builder-table-empty {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-weight: 700;
 }
 
 @media (max-width: 620px) {
