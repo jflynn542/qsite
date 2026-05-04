@@ -339,6 +339,7 @@ async function renderBuilderPage() {
         <div class="builder-answer-row compact-builder-answer-row${index === state.selectedIndex ? " selected" : ""}" data-index="${index}">
           <div class="builder-answer-main">
             <strong>${entry.answer}</strong>
+            ${entry.hint ? `<span>Hint: ${entry.hint}</span>` : ""}
           </div>
           <div class="builder-answer-meta compact-answer-meta">
             <span class="meta-pill">${firstPill}</span>
@@ -383,7 +384,10 @@ async function renderBuilderPage() {
 
     builderTablePreview.classList.remove("hidden");
     builderTablePreview.innerHTML = state.answers.length
-      ? state.answers.map((entry) => `<div class="builder-table-cell">${entry.answer}</div>`).join("")
+      ? state.answers.map((entry) => `
+          <div class="builder-table-hint-cell">${entry.hint || ""}</div>
+          <div class="builder-table-cell">${entry.answer}</div>
+        `).join("")
       : `<div class="builder-table-empty">Add answers to preview the table.</div>`;
   }
 
