@@ -462,7 +462,7 @@ function renderQuizPage() {
   if (tableQuizSection) tableQuizSection.classList.toggle("hidden", !isTableQuiz);
 
   if (quizImage && !isTableQuiz) {
-    quizImage.src = quiz.image;
+    quizImage.src = quiz.image || quiz.imagePath || "";
     quizImage.alt = quiz.title;
   }
 
@@ -511,9 +511,13 @@ function renderQuizPage() {
       quizTable.innerHTML = quiz.answers.map((entry) => {
         const isFound = found.includes(entry.answer);
         const showAnswer = isFound || finished;
-        const cellClass = isFound ? "table-answer-cell found" : (finished ? "table-answer-cell missed" : "table-answer-cell");
+        const answerClass = isFound ? "table-answer-cell found" : (finished ? "table-answer-cell missed" : "table-answer-cell");
+        const hintText = entry.hint || "";
 
-        return `<div class="${cellClass}">${showAnswer ? entry.answer : ""}</div>`;
+        return `
+          <div class="table-hint-cell">${hintText}</div>
+          <div class="${answerClass}">${showAnswer ? entry.answer : ""}</div>
+        `;
       }).join("");
       if (labelLayer) labelLayer.innerHTML = "";
       return;
