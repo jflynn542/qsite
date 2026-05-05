@@ -21,8 +21,4 @@ const quizCategories = [
   }
 ];
 
-const quizzes = [
-    ]
-  }
-];
-
+const quizzes = [];
