@@ -390,8 +390,6 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   box-shadow: none !important;
   text-shadow: 0 0 3px #fff;
 }
-.map-label.missed-answer,
-
 .quiz-stage-bottom {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
@@ -1367,4 +1365,64 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   color: #000 !important;
   border: none !important;
   box-shadow: none !important;
+}
+
+
+/* =========================
+   Map answers - text only fix
+   ========================= */
+#labelLayer .map-answer-text,
+#labelLayer .map-label {
+  position: absolute !important;
+  transform: translate(-50%, -50%) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #000 !important;
+  font-size: var(--quiz-label-size, 12px) !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+  text-shadow: 0 0 3px #fff !important;
+}
+
+#labelLayer .map-answer-text::before,
+#labelLayer .map-answer-text::after,
+#labelLayer .map-label::before,
+#labelLayer .map-label::after {
+  display: none !important;
+  content: none !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+#labelLayer .missed-answer-text,
+#labelLayer .missed-answer,
+#labelLayer .missed {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #000 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Also make labels in the builder preview text-only, including the selected marker. */
+.builder-marker span,
+.builder-marker.active span {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #000 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 3px #fff !important;
 }
