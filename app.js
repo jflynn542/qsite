@@ -516,17 +516,35 @@ function renderQuizPage() {
       quizTable.classList.toggle("compact-table", shouldUseCompactCells);
       quizTable.classList.toggle("tiny-table", shouldUseTinyCells);
 
-      quizTable.innerHTML = quiz.answers.map((entry) => {
+      const columns = Math.min(8, Math.max(1, Number(quiz.tableColumns) || 2));
+      quizTable.style.setProperty("--quiz-table-columns", columns);
+      
+      const total = quiz.answers.length;
+      const rows = Math.ceil(total / columns);
+      
+      // Create column-first order
+      const ordered = [];
+      
+      for (let col = 0; col < columns; col++) {
+        for (let row = 0; row < rows; row++) {
+          const index = row * columns + col;
+          if (index < total) {
+            ordered.push(quiz.answers[index]);
+          }
+        }
+      }
+      
+      quizTable.innerHTML = ordered.map((entry) => {
         const isFound = found.includes(entry.answer);
         const showAnswer = isFound || finished;
-        const answerClass = isFound ? "table-answer-cell found" : (finished ? "table-answer-cell missed" : "table-answer-cell");
-        const hintText = entry.hint || "";
-
+      
+        const answerClass = isFound
+          ? "table-answer-cell found"
+          : (finished ? "table-answer-cell missed" : "table-answer-cell");
+      
         return `
-          <div class="table-answer-pair">
-            <div class="table-hint-cell">${hintText}</div>
-            <div class="${answerClass}">${showAnswer ? entry.answer : ""}</div>
-          </div>
+          <div class="table-hint-cell">${entry.hint || ""}</div>
+          <div class="${answerClass}">${showAnswer ? entry.answer : ""}</div>
         `;
       }).join("");
       if (labelLayer) labelLayer.innerHTML = "";
