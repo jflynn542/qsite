@@ -568,12 +568,12 @@ function renderQuizPage() {
           `;
         }
 
-        const labelClass = isFound ? "map-label" : "map-label missed-answer";
+        const labelClass = isFound ? "map-answer-text" : "map-answer-text missed-answer-text";
 
         return `
           <div
             class="${labelClass}"
-            style="left:${entry.x}%; top:${entry.y}%; --quiz-label-size:${labelSize}px; --quiz-dot-size:${dotSize}px;"
+            style="left:${entry.x}%; top:${entry.y}%; --quiz-label-size:${labelSize}px; --quiz-dot-size:${dotSize}px; background:transparent !important; color:#000 !important; border:0 !important; border-radius:0 !important; padding:0 !important; box-shadow:none !important;"
           >
             ${entry.answer}
           </div>
