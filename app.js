@@ -443,6 +443,7 @@ function renderQuizPage() {
   const endBtn = document.getElementById("endBtn");
   const labelLayer = document.getElementById("labelLayer");
   const quizImage = document.getElementById("quizImage");
+  const quizMapInner = document.getElementById("quizMapInner");
   const mapQuizSection = document.getElementById("mapQuizSection");
   const tableQuizSection = document.getElementById("tableQuizSection");
   const quizTable = document.getElementById("quizTable");
@@ -464,6 +465,29 @@ function renderQuizPage() {
   if (quizImage && !isTableQuiz) {
     quizImage.src = quiz.image || quiz.imagePath || "";
     quizImage.alt = quiz.title;
+  }
+
+  function syncMapLayerToImage() {
+    if (!quizImage || !quizMapInner || !labelLayer || isTableQuiz) return;
+
+    const imageRect = quizImage.getBoundingClientRect();
+    if (!imageRect.width || !imageRect.height) return;
+
+    quizMapInner.style.width = `${imageRect.width}px`;
+    quizMapInner.style.height = `${imageRect.height}px`;
+    labelLayer.style.width = "100%";
+    labelLayer.style.height = "100%";
+  }
+
+  if (quizImage && !isTableQuiz) {
+    quizImage.addEventListener("load", () => {
+      requestAnimationFrame(syncMapLayerToImage);
+    });
+    window.addEventListener("resize", () => {
+      quizMapInner.style.width = "";
+      quizMapInner.style.height = "";
+      requestAnimationFrame(syncMapLayerToImage);
+    });
   }
 
   const progress = getQuizProgressFromStats(quiz);
@@ -507,43 +531,23 @@ function renderQuizPage() {
 
     if (isTableQuiz && quizTable) {
       const columns = Math.min(8, Math.max(1, Number(quiz.tableColumns) || 2));
-      const totalAnswers = quiz.answers.length;
-      const rows = Math.max(1, Math.ceil(totalAnswers / columns));
-
-      const fontSize = Math.max(7, Math.min(13, Math.floor(230 / rows)));
-      const cellPadding = rows >= 28 ? 3 : rows >= 20 ? 4 : 6;
-
       quizTable.style.setProperty("--quiz-table-columns", columns);
-      quizTable.style.setProperty("--quiz-table-rows", rows);
-      quizTable.style.setProperty("--quiz-table-font-size", `${fontSize}px`);
-      quizTable.style.setProperty("--quiz-table-cell-padding", `${cellPadding}px`);
-
-      quizTable.innerHTML = Array.from({ length: columns }, (_, columnIndex) => {
-        const startIndex = columnIndex * rows;
-        const columnAnswers = quiz.answers.slice(startIndex, startIndex + rows);
+      quizTable.innerHTML = quiz.answers.map((entry) => {
+        const isFound = found.includes(entry.answer);
+        const showAnswer = isFound || finished;
+        const answerClass = isFound ? "table-answer-cell found" : (finished ? "table-answer-cell missed" : "table-answer-cell");
+        const hintText = entry.hint || "";
 
         return `
-          <div class="table-answer-column">
-            ${columnAnswers.map((entry) => {
-              const isFound = found.includes(entry.answer);
-              const showAnswer = isFound || finished;
-              const answerClass = isFound ? "table-answer-cell found" : (finished ? "table-answer-cell missed" : "table-answer-cell");
-              const hintText = entry.hint || "";
-
-              return `
-                <div class="table-answer-pair">
-                  <div class="table-hint-cell" title="${hintText}">${hintText}</div>
-                  <div class="${answerClass}" title="${entry.answer}">${showAnswer ? entry.answer : ""}</div>
-                </div>
-              `;
-            }).join("")}
-          </div>
+          <div class="table-hint-cell">${hintText}</div>
+          <div class="${answerClass}">${showAnswer ? entry.answer : ""}</div>
         `;
       }).join("");
-
       if (labelLayer) labelLayer.innerHTML = "";
       return;
     }
+
+    syncMapLayerToImage();
 
     labelLayer.innerHTML = quiz.answers
       .map((entry) => {
@@ -568,12 +572,12 @@ function renderQuizPage() {
           `;
         }
 
-        const labelClass = isFound ? "map-answer-text" : "map-answer-text missed-answer-text";
+        const labelClass = isFound ? "map-label" : "map-label missed-answer";
 
         return `
           <div
             class="${labelClass}"
-            style="left:${entry.x}%; top:${entry.y}%; --quiz-label-size:${labelSize}px; --quiz-dot-size:${dotSize}px; background:transparent !important; color:#000 !important; border:0 !important; border-radius:0 !important; padding:0 !important; box-shadow:none !important;"
+            style="left:${entry.x}%; top:${entry.y}%; --quiz-label-size:${labelSize}px; --quiz-dot-size:${dotSize}px;"
           >
             ${entry.answer}
           </div>
