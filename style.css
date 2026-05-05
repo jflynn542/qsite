@@ -1457,3 +1457,61 @@ h3 { font-size: 1.05rem; font-weight: 800; }
     min-width: calc(var(--quiz-table-columns, 2) * 180px);
   }
 }
+
+/* =========================
+   Final table spacing override
+   Keeps country names on one line by scrolling instead of squishing
+   ========================= */
+
+.quiz-table-section {
+  width: min(1240px, 100%) !important;
+  max-height: clamp(380px, 62vh, 690px) !important;
+  overflow: auto !important;
+}
+
+.quiz-table {
+  grid-template-columns: repeat(var(--quiz-table-columns, 2), minmax(320px, 1fr)) !important;
+  min-width: calc(var(--quiz-table-columns, 2) * 320px) !important;
+  align-items: stretch !important;
+}
+
+.quiz-table.compact-table,
+.quiz-table.tiny-table {
+  grid-template-columns: repeat(var(--quiz-table-columns, 2), minmax(300px, 1fr)) !important;
+  min-width: calc(var(--quiz-table-columns, 2) * 300px) !important;
+}
+
+.table-answer-pair,
+.quiz-table.compact-table .table-answer-pair,
+.quiz-table.tiny-table .table-answer-pair {
+  grid-template-columns: minmax(145px, 1fr) minmax(145px, 1fr) !important;
+  min-height: 30px !important;
+}
+
+.quiz-table .table-hint-cell,
+.quiz-table .table-answer-cell,
+.quiz-table.compact-table .table-hint-cell,
+.quiz-table.compact-table .table-answer-cell,
+.quiz-table.tiny-table .table-hint-cell,
+.quiz-table.tiny-table .table-answer-cell {
+  min-width: 0 !important;
+  min-height: 30px !important;
+  padding: 5px 8px !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-size: 0.86rem !important;
+  line-height: 1.1 !important;
+}
+
+@media (max-width: 620px) {
+  .quiz-table,
+  .quiz-table.compact-table,
+  .quiz-table.tiny-table {
+    grid-template-columns: repeat(var(--quiz-table-columns, 2), minmax(300px, 1fr)) !important;
+    min-width: calc(var(--quiz-table-columns, 2) * 300px) !important;
+  }
+}
