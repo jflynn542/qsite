@@ -374,17 +374,8 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   max-height: 870px;
   object-fit: contain;
 }
-#labelLayer {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-.map-label,
-.map-label.missed-answer,
-.map-label.missed {
+#labelLayer { position: absolute; inset: 0; pointer-events: none; }
+.map-label {
   position: absolute;
   transform: translate(-50%, -50%);
   background: transparent !important;
@@ -393,12 +384,14 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   padding: 0 !important;
   border: none !important;
   border-radius: 0 !important;
-  box-shadow: none !important;
   white-space: nowrap;
   line-height: 1;
   font-weight: 700;
+  box-shadow: none !important;
   text-shadow: 0 0 3px #fff;
 }
+.map-label.missed-answer,
+
 .quiz-stage-bottom {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
@@ -509,7 +502,7 @@ h3 { font-size: 1.05rem; font-weight: 800; }
 .builder-answer-main span { font-size: 0.88rem; color: var(--muted); line-height: 1.4; word-break: break-word; }
 .builder-answer-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
 .builder-answer-meta .button-row { justify-content: flex-end; }
-.builder-marker { position: absolute; transform: translate(-50%, -50%); border: none; background: transparent; cursor: pointer; padding: 0; pointer-events: auto; }
+.builder-marker { position: absolute; transform: translate(-50%, -50%); border: none; background: transparent; cursor: default; padding: 0; pointer-events: none; }
 .builder-marker::before {
   content: "";
   position: absolute;
@@ -959,10 +952,7 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   display: none;
 }
 
-.map-label.missed {
-  border: 2px solid red;
-  background: rgba(255, 0, 0, 0.1);
-}
+
 
 .pause-overlay {
   position: fixed;
@@ -1355,105 +1345,26 @@ h3 { font-size: 1.05rem; font-weight: 800; }
 }
 
 
-/* =========================
-   Accurate map coordinate layer
-   Keeps saved x/y percentages aligned with the visible image.
-   ========================= */
-
-.compact-map-stage,
-.quiz-map-stage {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.quiz-map-inner {
-  position: relative !important;
-  display: inline-block !important;
-  line-height: 0 !important;
-  max-width: 100% !important;
-  width: auto;
-  height: auto;
-}
-
-.quiz-map-inner img,
-#quizImage {
-  display: block !important;
-  max-width: 100% !important;
-  max-height: 68vh !important;
-  width: auto !important;
-  height: auto !important;
-  object-fit: contain !important;
-}
-
-#labelLayer {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  pointer-events: none !important;
-}
-
-#labelLayer .map-label,
-#labelLayer .map-label.missed-answer,
-#labelLayer .map-label.missed {
-  position: absolute !important;
-  transform: translate(-50%, -50%) !important;
+/* Final map answer text override */
+.map-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
   background: transparent !important;
   color: #000 !important;
-  font-size: var(--quiz-label-size, 12px) !important;
+  font-size: var(--quiz-label-size, 12px);
   padding: 0 !important;
   border: none !important;
   border-radius: 0 !important;
-  outline: none !important;
+  white-space: nowrap;
+  line-height: 1;
+  font-weight: 700;
   box-shadow: none !important;
-  white-space: nowrap !important;
-  line-height: 1 !important;
-  font-weight: 700 !important;
-  text-shadow: 0 0 3px #fff !important;
+  text-shadow: 0 0 3px #fff;
 }
-
-/* =========================
-   Unguessed map answer markers
-   These show before an answer is guessed, then disappear once found.
-   ========================= */
-
-#labelLayer .map-answer-marker {
-  position: absolute !important;
-  width: var(--quiz-placeholder-size, 18px) !important;
-  height: var(--quiz-placeholder-size, 18px) !important;
-  transform: translate(-50%, -50%) !important;
-  display: grid !important;
-  place-items: center !important;
-  pointer-events: none !important;
-  user-select: none !important;
-  z-index: 1;
-  border-radius: 999px;
-  background: var(--accent);
-  border: 2px solid #fff;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.28);
-  overflow: hidden;
-}
-
-#labelLayer .map-answer-marker img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-  user-select: none;
-}
-
-#labelLayer .map-answer-marker.image-missing::after {
-  content: "";
-  width: 42%;
-  height: 42%;
-  border-radius: 999px;
-  background: #111;
-}
-
-#labelLayer .map-label,
-#labelLayer .map-label.missed-answer,
-#labelLayer .map-label.missed {
-  z-index: 2;
+.map-label.missed-answer,
+.map-label.missed {
+  background: transparent !important;
+  color: #000 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
