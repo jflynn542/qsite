@@ -1346,3 +1346,87 @@ h3 { font-size: 1.05rem; font-weight: 800; }
 .builder-marker::before {
   opacity: 0;
 }
+
+
+/* =========================
+   Responsive fitted table quiz area
+   ========================= */
+
+.quiz-table-section {
+  width: min(1180px, 100%);
+  height: clamp(420px, 58vh, 640px);
+  margin: 0 auto;
+  overflow: auto;
+  border: 1px solid var(--line-strong);
+  background: #fff;
+}
+
+.quiz-table {
+  width: 100%;
+  min-width: min(100%, calc(var(--quiz-table-columns, 2) * 120px));
+  display: grid;
+  grid-template-columns: repeat(var(--quiz-table-columns, 2), minmax(120px, 1fr));
+  align-content: start;
+  border-top: 0;
+  border-left: 0;
+  background: #fff;
+}
+
+.quiz-table .table-answer-pair {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(44px, 0.82fr) minmax(58px, 1fr);
+  border-right: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.quiz-table .table-hint-cell,
+.quiz-table .table-answer-cell {
+  min-width: 0;
+  min-height: 31px;
+  border-right: 0;
+  border-bottom: 0;
+  padding: 5px 6px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.08;
+  font-size: clamp(0.58rem, 0.74vw, 0.82rem);
+}
+
+.quiz-table .table-hint-cell {
+  border-right: 1px solid var(--line-strong);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.quiz-table .table-answer-cell {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.quiz-table.compact-table .table-hint-cell,
+.quiz-table.compact-table .table-answer-cell {
+  min-height: 24px;
+  padding: 3px 4px;
+  font-size: clamp(0.5rem, 0.62vw, 0.68rem);
+}
+
+.quiz-table.tiny-table .table-hint-cell,
+.quiz-table.tiny-table .table-answer-cell {
+  min-height: 22px;
+  padding: 2px 3px;
+  font-size: clamp(0.46rem, 0.55vw, 0.62rem);
+}
+
+@media (max-width: 760px) {
+  .quiz-table-section {
+    height: clamp(380px, 56vh, 560px);
+  }
+
+  .quiz-table {
+    min-width: calc(var(--quiz-table-columns, 2) * 110px);
+    grid-template-columns: repeat(var(--quiz-table-columns, 2), minmax(110px, 1fr));
+  }
+}
