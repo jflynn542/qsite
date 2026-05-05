@@ -506,40 +506,40 @@ function renderQuizPage() {
       : `<div class="empty-state">No correct answers yet.</div>`;
 
     if (isTableQuiz && quizTable) {
-      const selectedColumns = Math.min(8, Math.max(1, Number(quiz.tableColumns) || 2));
-      const totalAnswers = quiz.answers.length || 1;
-      const rowsNeeded = Math.ceil(totalAnswers / selectedColumns);
-      const shouldUseCompactCells = totalAnswers >= 120 || rowsNeeded >= 16;
-      const shouldUseTinyCells = totalAnswers >= 220 || rowsNeeded >= 28;
+      const columns = Math.min(8, Math.max(1, Number(quiz.tableColumns) || 2));
+      const totalAnswers = quiz.answers.length;
+      const rowsPerColumn = Math.ceil(totalAnswers / columns) || 1;
+      const shouldUseCompactCells = totalAnswers >= 120 || rowsPerColumn >= 16;
+      const shouldUseTinyCells = totalAnswers >= 220 || rowsPerColumn >= 28;
 
-      quizTable.style.setProperty("--quiz-table-columns", selectedColumns);
+      quizTable.style.setProperty("--quiz-table-columns", columns);
       quizTable.classList.toggle("compact-table", shouldUseCompactCells);
       quizTable.classList.toggle("tiny-table", shouldUseTinyCells);
 
-      const columnFirstAnswers = [];
+      const tableColumns = Array.from({ length: columns }, (_, columnIndex) => {
+        const startIndex = columnIndex * rowsPerColumn;
+        const endIndex = startIndex + rowsPerColumn;
+        return quiz.answers.slice(startIndex, endIndex);
+      });
 
-      for (let row = 0; row < rowsNeeded; row += 1) {
-        for (let column = 0; column < selectedColumns; column += 1) {
-          const answerIndex = column * rowsNeeded + row;
-          if (answerIndex < quiz.answers.length) {
-            columnFirstAnswers.push(quiz.answers[answerIndex]);
-          }
-        }
-      }
+      quizTable.innerHTML = tableColumns.map((columnEntries) => `
+        <div class="table-answer-column">
+          ${columnEntries.map((entry) => {
+            const isFound = found.includes(entry.answer);
+            const showAnswer = isFound || finished;
+            const answerClass = isFound ? "table-answer-cell found" : (finished ? "table-answer-cell missed" : "table-answer-cell");
+            const hintText = entry.hint || "";
 
-      quizTable.innerHTML = columnFirstAnswers.map((entry) => {
-        const isFound = found.includes(entry.answer);
-        const showAnswer = isFound || finished;
-        const answerClass = isFound ? "table-answer-cell found" : (finished ? "table-answer-cell missed" : "table-answer-cell");
-        const hintText = entry.hint || "";
+            return `
+              <div class="table-answer-pair">
+                <div class="table-hint-cell">${hintText}</div>
+                <div class="${answerClass}">${showAnswer ? entry.answer : ""}</div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `).join("");
 
-        return `
-          <div class="table-answer-pair">
-            <div class="table-hint-cell">${hintText}</div>
-            <div class="${answerClass}">${showAnswer ? entry.answer : ""}</div>
-          </div>
-        `;
-      }).join("");
       if (labelLayer) labelLayer.innerHTML = "";
       return;
     }
