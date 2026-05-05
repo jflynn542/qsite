@@ -1369,26 +1369,21 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   background: #fff;
 }
 
-.table-answer-column {
-  display: grid;
-  align-content: start;
-  border-left: 1px solid var(--line-strong);
-}
-
-.table-answer-column:first-child {
-  border-left: 0;
-}
-
 .table-answer-pair {
   display: grid;
   grid-template-columns: minmax(48px, 0.75fr) minmax(72px, 1fr);
   min-height: 34px;
+  border-right: 1px solid var(--line-strong);
+}
+
+.empty-table-pair {
+  border-bottom: 1px solid var(--line-strong);
+  background: #fff;
 }
 
 .quiz-table .table-hint-cell,
 .quiz-table .table-answer-cell {
   min-height: 34px;
-  border-right: 1px solid var(--line-strong);
   border-bottom: 1px solid var(--line-strong);
   padding: 6px 7px;
   display: flex;
@@ -1398,6 +1393,7 @@ h3 { font-size: 1.05rem; font-weight: 800; }
 }
 
 .quiz-table .table-hint-cell {
+  border-right: 1px solid var(--line-strong);
   background: #f7f7f7;
   color: var(--muted);
   font-weight: 700;
