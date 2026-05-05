@@ -565,7 +565,7 @@ function renderQuizPage() {
           return `
             <div
               class="map-answer-marker"
-              style="left:${entry.x}%; top:${entry.y}%; --quiz-placeholder-size:${placeholderSize}px;"
+              style="--marker-x:${entry.x}%; --marker-y:${entry.y}%; --quiz-placeholder-size:${placeholderSize}px;"
               title="${entry.answer}"
             >
               <img
