@@ -563,12 +563,17 @@ function renderQuizPage() {
 
         if (!isFound && !finished) {
           return `
-            <img
-              class="map-placeholder-image"
-              src="${placeholderImage}"
-              alt=""
+            <div
+              class="map-answer-marker"
               style="left:${entry.x}%; top:${entry.y}%; --quiz-placeholder-size:${placeholderSize}px;"
-            />
+              title="${entry.answer}"
+            >
+              <img
+                src="${placeholderImage}"
+                alt=""
+                onerror="this.style.display='none'; this.parentElement.classList.add('image-missing');"
+              />
+            </div>
           `;
         }
 
