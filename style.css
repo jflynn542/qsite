@@ -378,15 +378,18 @@ h3 { font-size: 1.05rem; font-weight: 800; }
 .map-label {
   position: absolute;
   transform: translate(-50%, -50%);
-  background: #111;
-  color: white;
+  background: transparent;
+  color: #000;
   font-size: var(--quiz-label-size, 12px);
-  padding: 0px 0px;
+  padding: 0;
+  border: none;
   border-radius: 0;
   white-space: nowrap;
   line-height: 1;
-  border: none;
+  font-weight: 700;
+  text-shadow: 0 0 3px white;
 }
+
 .map-label.missed-answer {
   background: rgba(255, 255, 255, 0.95);
   color: #b2452f;
