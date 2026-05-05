@@ -516,35 +516,28 @@ function renderQuizPage() {
       quizTable.classList.toggle("compact-table", shouldUseCompactCells);
       quizTable.classList.toggle("tiny-table", shouldUseTinyCells);
 
-      const columns = Math.min(8, Math.max(1, Number(quiz.tableColumns) || 2));
-      quizTable.style.setProperty("--quiz-table-columns", columns);
-      
-      const total = quiz.answers.length;
-      const rows = Math.ceil(total / columns);
-      
-      // Create column-first order
-      const ordered = [];
-      
-      for (let col = 0; col < columns; col++) {
-        for (let row = 0; row < rows; row++) {
-          const index = row * columns + col;
-          if (index < total) {
-            ordered.push(quiz.answers[index]);
+      const columnFirstAnswers = [];
+
+      for (let row = 0; row < rowsNeeded; row += 1) {
+        for (let column = 0; column < selectedColumns; column += 1) {
+          const answerIndex = column * rowsNeeded + row;
+          if (answerIndex < quiz.answers.length) {
+            columnFirstAnswers.push(quiz.answers[answerIndex]);
           }
         }
       }
-      
-      quizTable.innerHTML = ordered.map((entry) => {
+
+      quizTable.innerHTML = columnFirstAnswers.map((entry) => {
         const isFound = found.includes(entry.answer);
         const showAnswer = isFound || finished;
-      
-        const answerClass = isFound
-          ? "table-answer-cell found"
-          : (finished ? "table-answer-cell missed" : "table-answer-cell");
-      
+        const answerClass = isFound ? "table-answer-cell found" : (finished ? "table-answer-cell missed" : "table-answer-cell");
+        const hintText = entry.hint || "";
+
         return `
-          <div class="table-hint-cell">${entry.hint || ""}</div>
-          <div class="${answerClass}">${showAnswer ? entry.answer : ""}</div>
+          <div class="table-answer-pair">
+            <div class="table-hint-cell">${hintText}</div>
+            <div class="${answerClass}">${showAnswer ? entry.answer : ""}</div>
+          </div>
         `;
       }).join("");
       if (labelLayer) labelLayer.innerHTML = "";
