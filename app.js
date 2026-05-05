@@ -644,7 +644,6 @@ function renderQuizPage() {
     }
 
     if (found.includes(matchedAnswer)) {
-      answerInput.value = "";
       return;
     }
 
