@@ -705,8 +705,12 @@ async function renderBuilderPage() {
         .filter(Boolean);
 
       lines.forEach((line) => {
-        const [answerPart, hintPart = ""] = line.split("|");
-        addAnswer(answerPart.trim(), [], hintPart.trim());
+        const [answerPart, aliasPart = "", hintPart = ""] = line.split("|");
+        addAnswer(
+          answerPart.trim(),
+          normaliseAliases(aliasPart),
+          hintPart.trim()
+        );
       });
 
       if (lines.length) {
