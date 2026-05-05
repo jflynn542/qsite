@@ -516,29 +516,33 @@ function renderQuizPage() {
       quizTable.classList.toggle("compact-table", shouldUseCompactCells);
       quizTable.classList.toggle("tiny-table", shouldUseTinyCells);
 
-      const tableColumns = Array.from({ length: columns }, (_, columnIndex) => {
-        const startIndex = columnIndex * rowsPerColumn;
-        const endIndex = startIndex + rowsPerColumn;
-        return quiz.answers.slice(startIndex, endIndex);
-      });
+      const cells = [];
 
-      quizTable.innerHTML = tableColumns.map((columnEntries) => `
-        <div class="table-answer-column">
-          ${columnEntries.map((entry) => {
-            const isFound = found.includes(entry.answer);
-            const showAnswer = isFound || finished;
-            const answerClass = isFound ? "table-answer-cell found" : (finished ? "table-answer-cell missed" : "table-answer-cell");
-            const hintText = entry.hint || "";
+      for (let rowIndex = 0; rowIndex < rowsPerColumn; rowIndex += 1) {
+        for (let columnIndex = 0; columnIndex < columns; columnIndex += 1) {
+          const answerIndex = (columnIndex * rowsPerColumn) + rowIndex;
+          const entry = quiz.answers[answerIndex];
 
-            return `
-              <div class="table-answer-pair">
-                <div class="table-hint-cell">${hintText}</div>
-                <div class="${answerClass}">${showAnswer ? entry.answer : ""}</div>
-              </div>
-            `;
-          }).join("")}
-        </div>
-      `).join("");
+          if (!entry) {
+            cells.push(`<div class="table-answer-pair empty-table-pair" aria-hidden="true"></div>`);
+            continue;
+          }
+
+          const isFound = found.includes(entry.answer);
+          const showAnswer = isFound || finished;
+          const answerClass = isFound ? "table-answer-cell found" : (finished ? "table-answer-cell missed" : "table-answer-cell");
+          const hintText = entry.hint || "";
+
+          cells.push(`
+            <div class="table-answer-pair">
+              <div class="table-hint-cell">${hintText}</div>
+              <div class="${answerClass}">${showAnswer ? entry.answer : ""}</div>
+            </div>
+          `);
+        }
+      }
+
+      quizTable.innerHTML = cells.join("");
 
       if (labelLayer) labelLayer.innerHTML = "";
       return;
