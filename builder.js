@@ -296,12 +296,6 @@ async function renderBuilderPage() {
       })
       .join("");
 
-    markerLayer.querySelectorAll(".builder-marker").forEach((button) => {
-      button.addEventListener("click", () => {
-        state.selectedIndex = Number(button.dataset.index);
-        syncUI();
-      });
-    });
   }
 
   function renderAnswerSelect() {
@@ -735,7 +729,6 @@ async function renderBuilderPage() {
 
   mapInner.addEventListener("click", (event) => {
     if (state.quizType !== "map") return;
-    if (event.target.closest(".builder-marker")) return;
     if (state.selectedIndex < 0 || !state.answers[state.selectedIndex]) return;
     if (!state.imagePreview) return;
 
