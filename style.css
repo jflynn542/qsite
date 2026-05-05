@@ -378,23 +378,20 @@ h3 { font-size: 1.05rem; font-weight: 800; }
 .map-label {
   position: absolute;
   transform: translate(-50%, -50%);
-  background: transparent;
-  color: #000;
+  background: transparent !important;
+  color: #000 !important;
   font-size: var(--quiz-label-size, 12px);
-  padding: 0;
-  border: none;
-  border-radius: 0;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
   white-space: nowrap;
   line-height: 1;
   font-weight: 700;
-  text-shadow: 0 0 3px white;
+  box-shadow: none !important;
+  text-shadow: 0 0 3px #fff;
 }
+.map-label.missed-answer,
 
-.map-label.missed-answer {
-  background: rgba(255, 255, 255, 0.95);
-  color: #b2452f;
-  border: 3px solid #b2452f;
-}
 .quiz-stage-bottom {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
@@ -955,10 +952,7 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   display: none;
 }
 
-.map-label.missed {
-  border: 2px solid red;
-  background: rgba(255, 0, 0, 0.1);
-}
+
 
 .pause-overlay {
   position: fixed;
@@ -1350,84 +1344,27 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   opacity: 0;
 }
 
-/* =========================
-   Responsive fitted table quiz layout
-   Keeps answers ordered top-to-bottom, then left-to-right.
-   ========================= */
 
-.quiz-table-section {
-  width: 100%;
-  max-width: none;
-  margin: 0 auto;
-}
-
-.quiz-table {
-  width: 100%;
-  height: clamp(420px, 64vh, 620px);
-  display: grid;
-  grid-template-columns: repeat(var(--quiz-table-columns, 2), minmax(0, 1fr));
-  grid-auto-rows: 1fr;
-  overflow: auto;
-  border-top: 1px solid var(--line-strong);
-  border-left: 1px solid var(--line-strong);
-  background: #fff;
-}
-
-.table-answer-column {
-  min-width: 0;
-  height: 100%;
-  display: grid;
-  grid-template-rows: repeat(var(--quiz-table-rows, 1), minmax(18px, 1fr));
-}
-
-.table-answer-pair {
-  min-width: 0;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-}
-
-.quiz-table .table-hint-cell,
-.quiz-table .table-answer-cell {
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-  border-right: 1px solid var(--line-strong);
-  border-bottom: 1px solid var(--line-strong);
-  padding: var(--quiz-table-cell-padding, 6px);
-  display: flex;
-  align-items: center;
-  overflow: hidden;
+/* Final map answer text override */
+.map-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: transparent !important;
+  color: #000 !important;
+  font-size: var(--quiz-label-size, 12px);
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
   white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: var(--quiz-table-font-size, 12px);
   line-height: 1;
-}
-
-.quiz-table .table-hint-cell {
-  background: #f7f7f7;
-  color: var(--muted);
   font-weight: 700;
+  box-shadow: none !important;
+  text-shadow: 0 0 3px #fff;
 }
-
-.quiz-table .table-answer-cell {
-  background: #fff;
-  color: var(--text);
-  font-weight: 800;
-}
-
-.quiz-table .table-answer-cell.found {
-  background: var(--accent-soft);
-  color: var(--text);
-}
-
-.quiz-table .table-answer-cell.missed {
-  background: #fff5f5;
-  color: var(--danger);
-}
-
-@media (max-width: 620px) {
-  .quiz-table {
-    grid-template-columns: repeat(var(--quiz-table-columns, 2), minmax(0, 1fr)) !important;
-  }
+.map-label.missed-answer,
+.map-label.missed {
+  background: transparent !important;
+  color: #000 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
