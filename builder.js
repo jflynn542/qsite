@@ -231,10 +231,6 @@ async function renderBuilderPage() {
           parts.push(`dotSize: ${entry.dotSize}`);
         }
 
-        if (state.quizType === "map" && typeof entry.placeholderSize === "number") {
-          parts.push(`placeholderSize: ${entry.placeholderSize}`);
-        }
-
         return `  { ${parts.join(", ")} }`;
       })
       .join(",\n")}\n]`;
@@ -318,7 +314,7 @@ async function renderBuilderPage() {
         : "Table answer";
 
       const secondPill = state.quizType === "map"
-        ? `Text ${entry.labelSize || state.defaultLabelSize}px · Placeholder ${entry.placeholderSize || state.defaultPlaceholderSize}px`
+        ? `Text ${entry.labelSize || state.defaultLabelSize}px · Marker ${state.defaultPlaceholderSize}px`
         : `${Math.min(8, Math.max(1, Number(state.tableColumns) || 2))} columns`;
 
       return `
@@ -396,7 +392,6 @@ async function renderBuilderPage() {
           if (typeof entry.y === "number") cleanEntry.y = entry.y;
           cleanEntry.labelSize = typeof entry.labelSize === "number" ? entry.labelSize : state.defaultLabelSize;
           cleanEntry.dotSize = typeof entry.dotSize === "number" ? entry.dotSize : state.defaultDotSize;
-          cleanEntry.placeholderSize = typeof entry.placeholderSize === "number" ? entry.placeholderSize : state.defaultPlaceholderSize;
         }
         return cleanEntry;
       })
@@ -578,7 +573,6 @@ async function renderBuilderPage() {
     if (state.quizType === "map") {
       entry.labelSize = state.defaultLabelSize || 12;
       entry.dotSize = state.defaultDotSize || 10;
-      entry.placeholderSize = state.defaultPlaceholderSize || 18;
     }
 
     state.answers.push(entry);
@@ -656,9 +650,6 @@ async function renderBuilderPage() {
       const value = Number(placeholderSizeInput.value) || 18;
       state.defaultPlaceholderSize = value;
 
-      if (state.selectedIndex >= 0 && state.answers[state.selectedIndex]) {
-        state.answers[state.selectedIndex].placeholderSize = value;
-      }
 
       syncUI();
     });
@@ -736,7 +727,6 @@ async function renderBuilderPage() {
     state.answers[state.selectedIndex].y = y;
     state.answers[state.selectedIndex].labelSize = state.defaultLabelSize || 12;
     state.answers[state.selectedIndex].dotSize = state.defaultDotSize || 10;
-    state.answers[state.selectedIndex].placeholderSize = state.defaultPlaceholderSize || 18;
 
     const nextIndex = state.answers.findIndex(
       (entry) => typeof entry.x !== "number" || typeof entry.y !== "number"
