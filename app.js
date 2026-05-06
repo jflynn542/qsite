@@ -507,18 +507,40 @@ function renderQuizPage() {
 
     if (isTableQuiz && quizTable) {
       const columns = Math.min(8, Math.max(1, Number(quiz.tableColumns) || 2));
+      const totalAnswers = quiz.answers.length;
+      const rows = Math.max(1, Math.ceil(totalAnswers / columns));
+
+      const fontSize = Math.max(7, Math.min(13, Math.floor(230 / rows)));
+      const cellPadding = rows >= 28 ? 3 : rows >= 20 ? 4 : 6;
+
       quizTable.style.setProperty("--quiz-table-columns", columns);
-      quizTable.innerHTML = quiz.answers.map((entry) => {
-        const isFound = found.includes(entry.answer);
-        const showAnswer = isFound || finished;
-        const answerClass = isFound ? "table-answer-cell found" : (finished ? "table-answer-cell missed" : "table-answer-cell");
-        const hintText = entry.hint || "";
+      quizTable.style.setProperty("--quiz-table-rows", rows);
+      quizTable.style.setProperty("--quiz-table-font-size", `${fontSize}px`);
+      quizTable.style.setProperty("--quiz-table-cell-padding", `${cellPadding}px`);
+
+      quizTable.innerHTML = Array.from({ length: columns }, (_, columnIndex) => {
+        const startIndex = columnIndex * rows;
+        const columnAnswers = quiz.answers.slice(startIndex, startIndex + rows);
 
         return `
-          <div class="table-hint-cell">${hintText}</div>
-          <div class="${answerClass}">${showAnswer ? entry.answer : ""}</div>
+          <div class="table-answer-column">
+            ${columnAnswers.map((entry) => {
+              const isFound = found.includes(entry.answer);
+              const showAnswer = isFound || finished;
+              const answerClass = isFound ? "table-answer-cell found" : (finished ? "table-answer-cell missed" : "table-answer-cell");
+              const hintText = entry.hint || "";
+
+              return `
+                <div class="table-answer-pair">
+                  <div class="table-hint-cell" title="${hintText}">${hintText}</div>
+                  <div class="${answerClass}" title="${entry.answer}">${showAnswer ? entry.answer : ""}</div>
+                </div>
+              `;
+            }).join("")}
+          </div>
         `;
       }).join("");
+
       if (labelLayer) labelLayer.innerHTML = "";
       return;
     }
