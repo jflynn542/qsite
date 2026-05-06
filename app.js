@@ -506,19 +506,15 @@ function renderQuizPage() {
       : `<div class="empty-state">No correct answers yet.</div>`;
 
     if (isTableQuiz && quizTable) {
-      const requestedColumns = Math.min(8, Math.max(1, Number(quiz.tableColumns) || 2));
+      const columns = Math.min(8, Math.max(1, Number(quiz.tableColumns) || 2));
       const totalAnswers = quiz.answers.length;
-      const columns = Math.min(requestedColumns, Math.max(1, totalAnswers));
       const rows = Math.max(1, Math.ceil(totalAnswers / columns));
 
-      const availableHeight = Math.max(260, Math.min(window.innerHeight - 260, 720));
-      const rowHeight = Math.max(10, Math.floor(availableHeight / rows));
-      const fontSize = Math.max(5, Math.min(13, Math.floor(rowHeight * 0.46)));
-      const cellPadding = rowHeight <= 14 ? 1 : rowHeight <= 20 ? 2 : rowHeight <= 28 ? 3 : 5;
+      const fontSize = Math.max(7, Math.min(13, Math.floor(230 / rows)));
+      const cellPadding = rows >= 28 ? 3 : rows >= 20 ? 4 : 6;
 
       quizTable.style.setProperty("--quiz-table-columns", columns);
       quizTable.style.setProperty("--quiz-table-rows", rows);
-      quizTable.style.setProperty("--quiz-table-height", `${availableHeight}px`);
       quizTable.style.setProperty("--quiz-table-font-size", `${fontSize}px`);
       quizTable.style.setProperty("--quiz-table-cell-padding", `${cellPadding}px`);
 
@@ -549,18 +545,16 @@ function renderQuizPage() {
       return;
     }
 
-    if (!labelLayer) return;
-
     labelLayer.innerHTML = quiz.answers
       .map((entry) => {
         const x = Number(entry.x);
         const y = Number(entry.y);
-
         if (!Number.isFinite(x) || !Number.isFinite(y)) return "";
 
         const isFound = found.includes(entry.answer);
         const labelSize = typeof entry.labelSize === "number" ? entry.labelSize : 12;
-        const placeholderSize = typeof quiz.placeholderSize === "number" ? quiz.placeholderSize : 18;
+        const dotSize = typeof entry.dotSize === "number" ? entry.dotSize : 10;
+        const placeholderSize = Number(quiz.placeholderSize) || 18;
         const placeholderImage = quiz.placeholderImage || "assets/placeholder.png";
 
         if (!isFound && !finished) {
@@ -569,7 +563,6 @@ function renderQuizPage() {
               class="map-placeholder-image"
               src="${placeholderImage}"
               alt=""
-              aria-hidden="true"
               style="left:${x}%; top:${y}%; --quiz-placeholder-size:${placeholderSize}px;"
             />
           `;
@@ -580,7 +573,7 @@ function renderQuizPage() {
         return `
           <div
             class="${labelClass}"
-            style="left:${x}%; top:${y}%; --quiz-label-size:${labelSize}px;"
+            style="left:${x}%; top:${y}%; --quiz-label-size:${labelSize}px; --quiz-dot-size:${dotSize}px;"
           >
             ${entry.answer}
           </div>
