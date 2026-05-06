@@ -278,30 +278,16 @@ async function renderBuilderPage() {
       .filter((entry) => typeof entry.x === "number" && typeof entry.y === "number")
       .map((entry, index) => {
         const labelSize = typeof entry.labelSize === "number" ? entry.labelSize : state.defaultLabelSize;
-        const dotSize = typeof entry.dotSize === "number" ? entry.dotSize : state.defaultDotSize;
-        const placeholderSize = typeof entry.placeholderSize === "number" ? entry.placeholderSize : state.defaultPlaceholderSize;
 
         return `
-          <button
+          <span
             class="builder-marker${index === state.selectedIndex ? " active" : ""}"
-            style="left:${entry.x}%; top:${entry.y}%; --builder-label-size:${labelSize}px; --builder-dot-size:${dotSize}px; --builder-placeholder-size:${placeholderSize}px;"
-            data-index="${index}"
-            type="button"
+            style="left:${entry.x}%; top:${entry.y}%; --builder-label-size:${labelSize}px;"
             title="${entry.answer}"
-          >
-            <img class="builder-placeholder-preview" src="assets/placeholder.png" alt="" />
-            <span>${entry.answer}</span>
-          </button>
+          >${entry.answer}</span>
         `;
       })
       .join("");
-
-    markerLayer.querySelectorAll(".builder-marker").forEach((button) => {
-      button.addEventListener("click", () => {
-        state.selectedIndex = Number(button.dataset.index);
-        syncUI();
-      });
-    });
   }
 
   function renderAnswerSelect() {
@@ -735,13 +721,16 @@ async function renderBuilderPage() {
 
   mapInner.addEventListener("click", (event) => {
     if (state.quizType !== "map") return;
-    if (event.target.closest(".builder-marker")) return;
     if (state.selectedIndex < 0 || !state.answers[state.selectedIndex]) return;
     if (!state.imagePreview) return;
 
-    const rect = mapInner.getBoundingClientRect();
-    const x = Number((((event.clientX - rect.left) / rect.width) * 100).toFixed(1));
-    const y = Number((((event.clientY - rect.top) / rect.height) * 100).toFixed(1));
+    const rect = mapImage.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    const rawX = ((event.clientX - rect.left) / rect.width) * 100;
+    const rawY = ((event.clientY - rect.top) / rect.height) * 100;
+    const x = Number(Math.min(100, Math.max(0, rawX)).toFixed(2));
+    const y = Number(Math.min(100, Math.max(0, rawY)).toFixed(2));
 
     state.answers[state.selectedIndex].x = x;
     state.answers[state.selectedIndex].y = y;
