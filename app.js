@@ -556,10 +556,8 @@ function renderQuizPage() {
         const isFound = found.includes(entry.answer);
         const labelSize = typeof entry.labelSize === "number" ? entry.labelSize : 12;
         const dotSize = typeof entry.dotSize === "number" ? entry.dotSize : 10;
-        const placeholderSize = typeof entry.placeholderSize === "number"
-          ? entry.placeholderSize
-          : (typeof quiz.placeholderSize === "number" ? quiz.placeholderSize : 18);
-        const placeholderImage = quiz.placeholderImage || "assets/placeholder.png";
+        const placeholderSize = typeof quiz.placeholderSize === "number" ? quiz.placeholderSize : 18;
+        const placeholderImage = "assets/placeholder.png";
 
         if (!isFound && !finished) {
           return `
