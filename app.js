@@ -572,7 +572,6 @@ function renderQuizPage() {
     labelLayer.style.pointerEvents = "none";
     labelLayer.style.zIndex = "20";
 
-    const placeholderImage = quiz.placeholderImage || "assets/placeholder.png";
     const placeholderSize = Math.max(6, Number(quiz.placeholderSize) || 18);
 
     const mapAnswersWithCoordinates = quiz.answers
@@ -595,10 +594,10 @@ function renderQuizPage() {
         if (!isFound && !finished) {
           return `
             <span
-              class="map-placeholder-marker"
+              class="map-unanswered-marker"
               aria-label="Unanswered marker"
               title="Unanswered marker"
-              style="left:${x}%; top:${y}%; width:${placeholderSize}px; height:${placeholderSize}px; --quiz-placeholder-size:${placeholderSize}px; background-image:url('${placeholderImage.replace(/\'/g, "")}');"
+              style="left:${x}%; top:${y}%; --quiz-placeholder-size:${placeholderSize}px;"
             ></span>
           `;
         }
