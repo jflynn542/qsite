@@ -381,9 +381,9 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   border: none;
 }
 .map-label.missed-answer {
-  background: rgba(255, 255, 255, 0.95);
+  background: transparent;
   color: #b2452f;
-  border: 3px solid #b2452f;
+  border: none;
 }
 .quiz-stage-bottom {
   display: grid;
@@ -1562,4 +1562,16 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   transform: translate(-50%, -50%);
   border-radius: 999px;
   background: #111;
+}
+
+.map-label {
+  background: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+  color: #111 !important;
+}
+
+.map-label.missed-answer {
+  background: transparent !important;
+  border: none !important;
 }
