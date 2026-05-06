@@ -1485,3 +1485,50 @@ h3 { font-size: 1.05rem; font-weight: 800; }
 .quiz-map-inner #labelLayer .map-label {
   z-index: 11 !important;
 }
+
+/* =========================
+   Final map placeholder fix
+   ========================= */
+
+.quiz-map-inner {
+  position: relative !important;
+  display: inline-block !important;
+  line-height: 0 !important;
+}
+
+.quiz-map-inner > #quizImage {
+  display: block !important;
+}
+
+.quiz-map-inner > #labelLayer {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  overflow: visible !important;
+  pointer-events: none !important;
+  z-index: 20 !important;
+}
+
+.quiz-map-inner > #labelLayer .map-placeholder-marker {
+  position: absolute !important;
+  display: block !important;
+  transform: translate(-50%, -50%) !important;
+  background-repeat: no-repeat !important;
+  background-position: center center !important;
+  background-size: contain !important;
+  background-color: rgba(255, 159, 0, 0.35) !important;
+  border: 1px solid rgba(0, 0, 0, 0.35) !important;
+  border-radius: 999px !important;
+  max-width: none !important;
+  max-height: none !important;
+  min-width: 6px !important;
+  min-height: 6px !important;
+  pointer-events: none !important;
+  z-index: 30 !important;
+}
+
+.quiz-map-inner > #labelLayer .map-label {
+  position: absolute !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 31 !important;
+}
