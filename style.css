@@ -1454,3 +1454,34 @@ h3 { font-size: 1.05rem; font-weight: 800; }
 .quiz-map-inner #labelLayer .map-label {
   z-index: 6;
 }
+
+/* =========================
+   Robust unanswered map markers
+   Uses a background image instead of an <img> so global map image rules cannot hide or resize it.
+   ========================= */
+
+.quiz-map-inner #labelLayer .map-placeholder-marker,
+.compact-map-stage .quiz-map-inner #labelLayer .map-placeholder-marker {
+  position: absolute !important;
+  left: 0;
+  top: 0;
+  display: block !important;
+  width: var(--quiz-placeholder-size, 18px) !important;
+  height: var(--quiz-placeholder-size, 18px) !important;
+  min-width: var(--quiz-placeholder-size, 18px) !important;
+  min-height: var(--quiz-placeholder-size, 18px) !important;
+  max-width: none !important;
+  max-height: none !important;
+  transform: translate(-50%, -50%) !important;
+  background-image: var(--quiz-placeholder-image) !important;
+  background-repeat: no-repeat !important;
+  background-position: center center !important;
+  background-size: contain !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  z-index: 10 !important;
+}
+
+.quiz-map-inner #labelLayer .map-label {
+  z-index: 11 !important;
+}
