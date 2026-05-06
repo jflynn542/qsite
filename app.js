@@ -549,15 +549,19 @@ function renderQuizPage() {
       return;
     }
 
+    if (!labelLayer) return;
+
     labelLayer.innerHTML = quiz.answers
       .map((entry) => {
-        if (typeof entry.x !== "number" || typeof entry.y !== "number") return "";
+        const x = Number(entry.x);
+        const y = Number(entry.y);
+
+        if (!Number.isFinite(x) || !Number.isFinite(y)) return "";
 
         const isFound = found.includes(entry.answer);
         const labelSize = typeof entry.labelSize === "number" ? entry.labelSize : 12;
-        const dotSize = typeof entry.dotSize === "number" ? entry.dotSize : 10;
         const placeholderSize = typeof quiz.placeholderSize === "number" ? quiz.placeholderSize : 18;
-        const placeholderImage = "assets/placeholder.png";
+        const placeholderImage = quiz.placeholderImage || "assets/placeholder.png";
 
         if (!isFound && !finished) {
           return `
@@ -565,7 +569,8 @@ function renderQuizPage() {
               class="map-placeholder-image"
               src="${placeholderImage}"
               alt=""
-              style="left:${entry.x}%; top:${entry.y}%; --quiz-placeholder-size:${placeholderSize}px;"
+              aria-hidden="true"
+              style="left:${x}%; top:${y}%; --quiz-placeholder-size:${placeholderSize}px;"
             />
           `;
         }
@@ -575,7 +580,7 @@ function renderQuizPage() {
         return `
           <div
             class="${labelClass}"
-            style="left:${entry.x}%; top:${entry.y}%; --quiz-label-size:${labelSize}px; --quiz-dot-size:${dotSize}px;"
+            style="left:${x}%; top:${y}%; --quiz-label-size:${labelSize}px;"
           >
             ${entry.answer}
           </div>
