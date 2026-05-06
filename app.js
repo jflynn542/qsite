@@ -559,12 +559,11 @@ function renderQuizPage() {
 
         if (!isFound && !finished) {
           return `
-            <img
-              class="map-placeholder-image"
-              src="${placeholderImage}"
-              alt=""
-              style="left:${x}%; top:${y}%; --quiz-placeholder-size:${placeholderSize}px;"
-            />
+            <span
+              class="map-placeholder-marker"
+              aria-hidden="true"
+              style="left:${x}%; top:${y}%; --quiz-placeholder-size:${placeholderSize}px; --quiz-placeholder-image:url('${placeholderImage}');"
+            ></span>
           `;
         }
 
