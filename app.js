@@ -490,6 +490,25 @@ function renderQuizPage() {
     return `${mins}:${secs}`;
   }
 
+  function getMapCoordinate(entry, primaryKey, fallbackKeys = []) {
+    const keys = [primaryKey, ...fallbackKeys];
+    for (const key of keys) {
+      if (entry[key] === undefined || entry[key] === null || entry[key] === "") continue;
+      const value = Number(entry[key]);
+      if (Number.isFinite(value)) return value;
+    }
+    return null;
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   function updateDisplay() {
     correctCount.textContent = found.length;
     remainingCount.textContent = `${quiz.answers.length - found.length} remaining`;
@@ -545,24 +564,41 @@ function renderQuizPage() {
       return;
     }
 
-    labelLayer.innerHTML = quiz.answers
-      .map((entry) => {
-        const x = Number(entry.x);
-        const y = Number(entry.y);
-        if (!Number.isFinite(x) || !Number.isFinite(y)) return "";
+    if (!labelLayer) return;
 
+    labelLayer.style.position = "absolute";
+    labelLayer.style.inset = "0";
+    labelLayer.style.display = "block";
+    labelLayer.style.pointerEvents = "none";
+    labelLayer.style.zIndex = "20";
+
+    const placeholderImage = quiz.placeholderImage || "assets/placeholder.png";
+    const placeholderSize = Math.max(6, Number(quiz.placeholderSize) || 18);
+
+    const mapAnswersWithCoordinates = quiz.answers
+      .map((entry) => ({
+        entry,
+        x: getMapCoordinate(entry, "x", ["left", "coordX", "markerX"]),
+        y: getMapCoordinate(entry, "y", ["top", "coordY", "markerY"])
+      }))
+      .filter((item) => item.x !== null && item.y !== null);
+
+    if (!isTableQuiz && quiz.answers.length && !mapAnswersWithCoordinates.length) {
+      console.warn(`No map marker coordinates found for quiz: ${quiz.id || quiz.title}. Each answer needs numeric x and y values.`);
+    }
+
+    labelLayer.innerHTML = mapAnswersWithCoordinates
+      .map(({ entry, x, y }) => {
         const isFound = found.includes(entry.answer);
         const labelSize = typeof entry.labelSize === "number" ? entry.labelSize : 12;
-        const dotSize = typeof entry.dotSize === "number" ? entry.dotSize : 10;
-        const placeholderSize = Number(quiz.placeholderSize) || 18;
-        const placeholderImage = quiz.placeholderImage || "assets/placeholder.png";
 
         if (!isFound && !finished) {
           return `
             <span
               class="map-placeholder-marker"
-              aria-hidden="true"
-              style="left:${x}%; top:${y}%; --quiz-placeholder-size:${placeholderSize}px; --quiz-placeholder-image:url('${placeholderImage}');"
+              aria-label="Unanswered marker"
+              title="Unanswered marker"
+              style="left:${x}%; top:${y}%; width:${placeholderSize}px; height:${placeholderSize}px; --quiz-placeholder-size:${placeholderSize}px; background-image:url('${placeholderImage.replace(/\'/g, "")}');"
             ></span>
           `;
         }
@@ -572,9 +608,9 @@ function renderQuizPage() {
         return `
           <div
             class="${labelClass}"
-            style="left:${x}%; top:${y}%; --quiz-label-size:${labelSize}px; --quiz-dot-size:${dotSize}px;"
+            style="left:${x}%; top:${y}%; --quiz-label-size:${labelSize}px;"
           >
-            ${entry.answer}
+            ${escapeHtml(entry.answer)}
           </div>
         `;
       })
