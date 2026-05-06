@@ -1523,3 +1523,35 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   border: 2px solid var(--danger);
   padding: 2px 3px;
 }
+
+
+/* =========================
+   Map quiz unanswered placeholders
+   ========================= */
+
+#labelLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.map-placeholder-image {
+  position: absolute;
+  display: block !important;
+  width: var(--quiz-placeholder-size, 18px);
+  height: var(--quiz-placeholder-size, 18px);
+  min-width: var(--quiz-placeholder-size, 18px);
+  min-height: var(--quiz-placeholder-size, 18px);
+  max-width: none !important;
+  max-height: none !important;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  z-index: 3;
+}
+
+.map-label {
+  z-index: 4;
+}
