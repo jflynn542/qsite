@@ -506,15 +506,19 @@ function renderQuizPage() {
       : `<div class="empty-state">No correct answers yet.</div>`;
 
     if (isTableQuiz && quizTable) {
-      const columns = Math.min(8, Math.max(1, Number(quiz.tableColumns) || 2));
+      const requestedColumns = Math.min(8, Math.max(1, Number(quiz.tableColumns) || 2));
       const totalAnswers = quiz.answers.length;
+      const columns = Math.min(requestedColumns, Math.max(1, totalAnswers));
       const rows = Math.max(1, Math.ceil(totalAnswers / columns));
 
-      const fontSize = Math.max(7, Math.min(13, Math.floor(230 / rows)));
-      const cellPadding = rows >= 28 ? 3 : rows >= 20 ? 4 : 6;
+      const availableHeight = Math.max(260, Math.min(window.innerHeight - 260, 720));
+      const rowHeight = Math.max(10, Math.floor(availableHeight / rows));
+      const fontSize = Math.max(5, Math.min(13, Math.floor(rowHeight * 0.46)));
+      const cellPadding = rowHeight <= 14 ? 1 : rowHeight <= 20 ? 2 : rowHeight <= 28 ? 3 : 5;
 
       quizTable.style.setProperty("--quiz-table-columns", columns);
       quizTable.style.setProperty("--quiz-table-rows", rows);
+      quizTable.style.setProperty("--quiz-table-height", `${availableHeight}px`);
       quizTable.style.setProperty("--quiz-table-font-size", `${fontSize}px`);
       quizTable.style.setProperty("--quiz-table-cell-padding", `${cellPadding}px`);
 
