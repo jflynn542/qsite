@@ -1822,3 +1822,32 @@ h3 { font-size: 1.05rem; font-weight: 800; }
 .map-label.missed-answer {
   color: var(--danger) !important;
 }
+
+/* =========================
+   Live global high-score pace tracker
+   ========================= */
+
+.quiz-stat-box.pace-on-track {
+  background: #f1faf4;
+  border-color: #8fd3a7;
+}
+
+.quiz-stat-box.pace-on-track span,
+.quiz-stat-box.pace-on-track strong {
+  color: var(--success);
+}
+
+.quiz-stat-box.pace-behind {
+  background: #fff5f5;
+  border-color: #efb3b3;
+}
+
+.quiz-stat-box.pace-behind span,
+.quiz-stat-box.pace-behind strong {
+  color: var(--danger);
+}
+
+.quiz-stat-box.pace-neutral {
+  background: #f7f7f7;
+  border-color: var(--line);
+}
