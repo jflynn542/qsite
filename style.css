@@ -1828,27 +1828,41 @@ h3 { font-size: 1.05rem; font-weight: 800; }
    Live global high-score pace tracker
    ========================= */
 
-.quiz-stat-box.pace-on-track {
-  background: #eefaf2 !important;
-  border-color: #16833a !important;
+.pace-stat-box {
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
 }
 
-.quiz-stat-box.pace-on-track span,
-.quiz-stat-box.pace-on-track strong {
-  color: #16833a !important;
+.pace-stat-box small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.15;
 }
 
-.quiz-stat-box.pace-behind {
-  background: #fff1f1 !important;
-  border-color: #c4372f !important;
+.pace-stat-box.pace-good {
+  background: #eefaf2;
+  border-color: #55a96f;
 }
 
-.quiz-stat-box.pace-behind span,
-.quiz-stat-box.pace-behind strong {
-  color: #c4372f !important;
+.pace-stat-box.pace-good span,
+.pace-stat-box.pace-good strong,
+.pace-stat-box.pace-good small {
+  color: #177d3f !important;
 }
 
-.quiz-stat-box.pace-neutral {
-  background: #f7f7f7 !important;
-  border-color: var(--line-strong) !important;
+.pace-stat-box.pace-bad {
+  background: #fff0f0;
+  border-color: #d56b6b;
+}
+
+.pace-stat-box.pace-bad span,
+.pace-stat-box.pace-bad strong,
+.pace-stat-box.pace-bad small {
+  color: var(--danger) !important;
+}
+
+.pace-stat-box.pace-neutral {
+  background: #f7f7f7;
 }
