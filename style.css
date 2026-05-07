@@ -1815,3 +1815,10 @@ h3 { font-size: 1.05rem; font-weight: 800; }
     grid-column: 2 / -1;
   }
 }
+
+/* Fix: make missed map answers red after the quiz ends */
+.quiz-map-inner > #labelLayer .map-label.missed-answer,
+#labelLayer .map-label.missed-answer,
+.map-label.missed-answer {
+  color: var(--danger) !important;
+}
