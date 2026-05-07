@@ -131,16 +131,29 @@ async function loadLeaderboard(quiz) {
 
   try {
     const { db } = await import("./js/firebase-config.js");
-    const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    const {
+      collection,
+      getDocs,
+      query,
+      orderBy,
+      limit
+    } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
 
-    // Fetch first, then sort in the browser. This avoids needing a Firestore composite index
-    // for score desc + timeTaken asc, and also gives the live pace tracker the #1 score.
-    const snapshot = await getDocs(collection(db, "quizLeaderboards", quiz.id, "scores"));
+    // Only order by score in Firestore. Then sort tied scores by time in JavaScript.
+    // This avoids the composite Firestore index problem for score + timeTaken.
+    const scoresQuery = query(
+      collection(db, "quizLeaderboards", quiz.id, "scores"),
+      orderBy("score", "desc"),
+      limit(50)
+    );
+
+    const snapshot = await getDocs(scoresQuery);
     const rows = snapshot.docs
       .map((doc) => doc.data())
       .sort((a, b) => {
         const scoreDiff = (Number(b.score) || 0) - (Number(a.score) || 0);
         if (scoreDiff !== 0) return scoreDiff;
+
         const aTime = Number.isFinite(Number(a.timeTaken)) ? Number(a.timeTaken) : Number.MAX_SAFE_INTEGER;
         const bTime = Number.isFinite(Number(b.timeTaken)) ? Number(b.timeTaken) : Number.MAX_SAFE_INTEGER;
         return aTime - bTime;
@@ -168,6 +181,7 @@ async function loadLeaderboard(quiz) {
     return [];
   }
 }
+
 
 function renderQuizPerformancePanel(quiz) {
   const highScoreText = document.getElementById("personalHighScoreText");
@@ -638,10 +652,9 @@ function renderQuizPage() {
   renderQuizPerformancePanel(quiz);
 
   let globalHighScoreTarget = null;
-
   loadLeaderboard(quiz).then((rows) => {
-    globalHighScoreTarget = rows && rows.length ? rows[0] : null;
-    updatePaceTracker();
+    globalHighScoreTarget = Array.isArray(rows) && rows.length ? rows[0] : null;
+    updatePaceDisplay();
   });
 
   let found = [];
@@ -663,50 +676,6 @@ function renderQuizPage() {
     return `${mins}:${secs}`;
   }
 
-  function resetPaceTracker() {
-    if (paceStatLabel) paceStatLabel.textContent = "Played";
-    if (timesPlayed) timesPlayed.textContent = getQuizProgressFromStats(quiz).plays;
-    if (paceStatBox) {
-      paceStatBox.classList.remove("pace-on-track", "pace-behind", "pace-neutral");
-    }
-  }
-
-  function updatePaceTracker() {
-    if (!timesPlayed) return;
-
-    if (!started || finished) {
-      resetPaceTracker();
-      return;
-    }
-
-    if (paceStatLabel) paceStatLabel.textContent = "Pace";
-
-    const targetScore = Number(globalHighScoreTarget?.score) || 0;
-    const targetTime = Number(globalHighScoreTarget?.timeTaken);
-
-    if (!targetScore || !Number.isFinite(targetTime) || targetTime <= 0) {
-      timesPlayed.textContent = "--";
-      if (paceStatBox) {
-        paceStatBox.classList.remove("pace-on-track", "pace-behind");
-        paceStatBox.classList.add("pace-neutral");
-      }
-      return;
-    }
-
-    const elapsed = Math.max(0, quiz.timeLimit - timeLeft);
-    const secondsPerAnswer = targetTime / targetScore;
-    const expectedScore = Math.min(targetScore, Math.floor(elapsed / secondsPerAnswer));
-    const difference = found.length - expectedScore;
-
-    timesPlayed.textContent = `${difference >= 0 ? "+" : ""}${difference}`;
-
-    if (paceStatBox) {
-      paceStatBox.classList.toggle("pace-on-track", difference >= 0);
-      paceStatBox.classList.toggle("pace-behind", difference < 0);
-      paceStatBox.classList.remove("pace-neutral");
-    }
-  }
-
   function getMapCoordinate(entry, primaryKey, fallbackKeys = []) {
     const keys = [primaryKey, ...fallbackKeys];
     for (const key of keys) {
@@ -726,13 +695,49 @@ function renderQuizPage() {
       .replace(/'/g, "&#039;");
   }
 
+  function setPaceBoxState(stateClass) {
+    if (!paceStatBox) return;
+    paceStatBox.classList.remove("pace-on-track", "pace-behind", "pace-neutral");
+    if (stateClass) paceStatBox.classList.add(stateClass);
+  }
+
+  function updatePaceDisplay() {
+    if (!timesPlayed) return;
+
+    if (!started || finished) {
+      if (paceStatLabel) paceStatLabel.textContent = "Played";
+      timesPlayed.textContent = getQuizStatsRecord(quiz.id).plays;
+      setPaceBoxState("");
+      return;
+    }
+
+    if (paceStatLabel) paceStatLabel.textContent = "Pace";
+
+    const targetScore = Number(globalHighScoreTarget?.score) || 0;
+    const targetTimeTaken = Number(globalHighScoreTarget?.timeTaken);
+
+    if (!targetScore || !Number.isFinite(targetTimeTaken) || targetTimeTaken <= 0) {
+      timesPlayed.textContent = "--";
+      setPaceBoxState("pace-neutral");
+      return;
+    }
+
+    const elapsed = Math.max(0, quiz.timeLimit - timeLeft);
+    const secondsPerAnswer = targetTimeTaken / targetScore;
+    const expectedScoreByNow = Math.min(targetScore, Math.floor(elapsed / secondsPerAnswer));
+    const difference = found.length - expectedScoreByNow;
+
+    timesPlayed.textContent = difference >= 0 ? `+${difference}` : String(difference);
+    setPaceBoxState(difference >= 0 ? "pace-on-track" : "pace-behind");
+  }
+
   function updateDisplay() {
     correctCount.textContent = found.length;
     remainingCount.textContent = `${quiz.answers.length - found.length} remaining`;
+    updatePaceDisplay();
 
     const percentage = quiz.answers.length ? Math.round((found.length / quiz.answers.length) * 100) : 0;
     progressBar.style.width = `${percentage}%`;
-    updatePaceTracker();
 
     foundAnswers.innerHTML = found.length
       ? found
@@ -884,14 +889,9 @@ function renderQuizPage() {
     setStats(stats);
 
     bestScore.textContent = current.bestScore;
-    resetPaceTracker();
+    timesPlayed.textContent = current.plays;
     renderQuizPerformancePanel(quiz);
-    saveLeaderboardScore(quiz, score, timeTaken).then(() => {
-      loadLeaderboard(quiz).then((rows) => {
-        globalHighScoreTarget = rows && rows.length ? rows[0] : null;
-        updatePaceTracker();
-      });
-    });
+    saveLeaderboardScore(quiz, score, timeTaken).then(() => loadLeaderboard(quiz));
     updateDisplay();
   }
 
@@ -919,7 +919,7 @@ function renderQuizPage() {
     timer = setInterval(() => {
       timeLeft -= 1;
       timerDisplay.textContent = formatTime(timeLeft);
-      updatePaceTracker();
+      updatePaceDisplay();
 
       if (timeLeft <= 0) {
         finishQuiz("time");
@@ -986,7 +986,7 @@ function renderQuizPage() {
     timer = setInterval(() => {
       timeLeft -= 1;
       timerDisplay.textContent = formatTime(timeLeft);
-      updatePaceTracker();
+      updatePaceDisplay();
 
       if (timeLeft <= 0) {
         finishQuiz("time");
