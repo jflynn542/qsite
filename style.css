@@ -1823,31 +1823,32 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   color: var(--danger) !important;
 }
 
+
 /* =========================
    Live global high-score pace tracker
    ========================= */
 
 .quiz-stat-box.pace-on-track {
-  background: #f1faf4;
-  border-color: #8fd3a7;
+  background: #eefaf2 !important;
+  border-color: #16833a !important;
 }
 
 .quiz-stat-box.pace-on-track span,
 .quiz-stat-box.pace-on-track strong {
-  color: var(--success);
+  color: #16833a !important;
 }
 
 .quiz-stat-box.pace-behind {
-  background: #fff5f5;
-  border-color: #efb3b3;
+  background: #fff1f1 !important;
+  border-color: #c4372f !important;
 }
 
 .quiz-stat-box.pace-behind span,
 .quiz-stat-box.pace-behind strong {
-  color: var(--danger);
+  color: #c4372f !important;
 }
 
 .quiz-stat-box.pace-neutral {
-  background: #f7f7f7;
-  border-color: var(--line);
+  background: #f7f7f7 !important;
+  border-color: var(--line-strong) !important;
 }
