@@ -1575,3 +1575,243 @@ h3 { font-size: 1.05rem; font-weight: 800; }
   background: transparent !important;
   border: none !important;
 }
+
+
+/* =========================
+   Quiz high score and leaderboard panel
+   ========================= */
+
+.quiz-performance-panel {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) minmax(0, 0.7fr) minmax(280px, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.quiz-performance-card,
+.account-section-card,
+.account-profile-card {
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.high-score-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.stat-label {
+  display: block;
+  color: var(--accent-deep);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.high-score-card strong {
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.high-score-card p {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.mini-chart-heading {
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.mini-chart-heading h3 {
+  font-size: 0.95rem;
+}
+
+.mini-chart {
+  height: 92px;
+  display: flex;
+  align-items: end;
+  gap: 5px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+.mini-chart-bar {
+  flex: 1;
+  min-width: 10px;
+  max-width: 32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--accent);
+  border: 1px solid var(--accent-deep);
+  border-radius: 5px 5px 0 0;
+}
+
+.mini-chart-bar small {
+  display: block;
+  color: #111;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+  padding-bottom: 3px;
+}
+
+.play-chart .mini-chart-bar {
+  background: var(--accent-soft);
+}
+
+.leaderboard-list {
+  display: grid;
+  gap: 6px;
+  max-height: 156px;
+  overflow: auto;
+}
+
+.leaderboard-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.leaderboard-row:last-child {
+  border-bottom: 0;
+}
+
+.leaderboard-rank {
+  color: var(--accent-deep);
+  font-weight: 900;
+}
+
+.leaderboard-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 700;
+}
+
+.leaderboard-row small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* =========================
+   Account stats page
+   ========================= */
+
+.account-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.account-profile-card img {
+  width: 80px;
+  height: 80px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 2px solid var(--accent);
+  background: #f7f7f7;
+}
+
+.account-profile-card p {
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.account-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.account-section-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.account-section-card h3 {
+  margin-bottom: 10px;
+}
+
+.account-list {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid var(--line);
+}
+
+.account-list-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.account-list-row:hover strong,
+.account-list-row:hover b {
+  color: var(--accent-deep);
+}
+
+.account-list-row span {
+  min-width: 0;
+}
+
+.account-list-row strong,
+.account-list-row small {
+  display: block;
+}
+
+.account-list-row strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.account-list-row small {
+  color: var(--muted);
+  margin-top: 3px;
+  font-size: 0.78rem;
+}
+
+.account-list-row b {
+  white-space: nowrap;
+}
+
+@media (max-width: 1040px) {
+  .quiz-performance-panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .quiz-performance-panel,
+  .account-stat-grid,
+  .account-section-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .leaderboard-row {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+  }
+
+  .leaderboard-row small {
+    grid-column: 2 / -1;
+  }
+}
