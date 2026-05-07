@@ -36,6 +36,160 @@ function setStats(stats) {
   localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(stats));
 }
 
+
+function formatStatTime(seconds) {
+  if (!Number.isFinite(Number(seconds))) return "--";
+  const totalSeconds = Math.max(0, Math.floor(Number(seconds)));
+  const mins = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
+  const secs = (totalSeconds % 60).toString().padStart(2, "0");
+  return `${mins}:${secs}`;
+}
+
+function normaliseHistoryItem(item, index = 0) {
+  if (typeof item === "number") {
+    return {
+      score: item,
+      timeTaken: null,
+      playedAt: null,
+      playNumber: index + 1
+    };
+  }
+
+  return {
+    score: Number(item?.score) || 0,
+    timeTaken: Number.isFinite(Number(item?.timeTaken)) ? Number(item.timeTaken) : null,
+    playedAt: item?.playedAt || null,
+    reason: item?.reason || "",
+    playNumber: index + 1
+  };
+}
+
+function getQuizStatsRecord(quizId) {
+  const stats = getStats();
+  const current = stats[quizId] || { bestScore: 0, plays: 0, history: [] };
+  const history = Array.isArray(current.history) ? current.history.map(normaliseHistoryItem) : [];
+  return {
+    bestScore: Number(current.bestScore) || 0,
+    bestTimeTaken: Number.isFinite(Number(current.bestTimeTaken)) ? Number(current.bestTimeTaken) : null,
+    plays: Number(current.plays) || history.length || 0,
+    history,
+    recentPlays: Array.isArray(current.recentPlays) ? current.recentPlays : []
+  };
+}
+
+function buildMiniBarChart(items, getValue, options = {}) {
+  const values = items.map((item) => Number(getValue(item)) || 0);
+  const maxValue = Math.max(1, options.maxValue || 0, ...values);
+  if (!items.length) return `<div class="empty-state">No plays yet.</div>`;
+
+  return items.map((item, index) => {
+    const value = values[index];
+    const height = Math.max(8, Math.round((value / maxValue) * 100));
+    const label = options.getLabel ? options.getLabel(item, index) : value;
+    const title = options.getTitle ? options.getTitle(item, index) : label;
+    return `<span class="mini-chart-bar" style="height:${height}%" title="${title}"><small>${label}</small></span>`;
+  }).join("");
+}
+
+async function saveLeaderboardScore(quiz, score, timeTaken) {
+  try {
+    const { auth, db } = await import("./js/firebase-config.js");
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const { doc, getDoc, setDoc, serverTimestamp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    const scoreRef = doc(db, "quizLeaderboards", quiz.id, "scores", user.uid);
+    const scoreSnap = await getDoc(scoreRef);
+    const old = scoreSnap.exists() ? scoreSnap.data() : null;
+
+    const oldScore = Number(old?.score) || 0;
+    const oldTime = Number.isFinite(Number(old?.timeTaken)) ? Number(old.timeTaken) : null;
+    const shouldUpdate = !old || score > oldScore || (score === oldScore && (oldTime === null || timeTaken < oldTime));
+
+    if (!shouldUpdate) return;
+
+    await setDoc(scoreRef, {
+      quizId: quiz.id,
+      quizTitle: quiz.title,
+      userId: user.uid,
+      name: user.displayName || user.email || "Anonymous",
+      email: user.email || "",
+      photo: user.photoURL || "",
+      score,
+      total: quiz.answers.length,
+      timeTaken,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  } catch (error) {
+    console.error("Could not save leaderboard score:", error);
+  }
+}
+
+async function loadLeaderboard(quiz) {
+  const leaderboardList = document.getElementById("leaderboardList");
+  if (!leaderboardList) return;
+
+  try {
+    const { db } = await import("./js/firebase-config.js");
+    const { collection, getDocs, query, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    const scoresQuery = query(
+      collection(db, "quizLeaderboards", quiz.id, "scores"),
+      orderBy("score", "desc"),
+      orderBy("timeTaken", "asc"),
+      limit(10)
+    );
+    const snapshot = await getDocs(scoresQuery);
+    const rows = snapshot.docs.map((doc) => doc.data());
+
+    if (!rows.length) {
+      leaderboardList.innerHTML = `<div class="empty-state">No leaderboard scores yet.</div>`;
+      return;
+    }
+
+    leaderboardList.innerHTML = rows.map((row, index) => `
+      <div class="leaderboard-row">
+        <span class="leaderboard-rank">#${index + 1}</span>
+        <span class="leaderboard-name">${row.name || "Anonymous"}</span>
+        <strong>${Number(row.score) || 0} / ${Number(row.total) || quiz.answers.length}</strong>
+        <small>${formatStatTime(row.timeTaken)}</small>
+      </div>
+    `).join("");
+  } catch (error) {
+    console.error("Could not load leaderboard:", error);
+    leaderboardList.innerHTML = `<div class="empty-state">Leaderboard unavailable. If this is your first time using it, Firestore may ask you to create an index for score and timeTaken.</div>`;
+  }
+}
+
+function renderQuizPerformancePanel(quiz) {
+  const highScoreText = document.getElementById("personalHighScoreText");
+  const highScoreTime = document.getElementById("personalHighScoreTime");
+  const scoreChart = document.getElementById("scoreProgressionChart");
+  const playChart = document.getElementById("playHistoryChart");
+  const scoreSummary = document.getElementById("scoreProgressionSummary");
+  const playSummary = document.getElementById("playHistorySummary");
+  if (!highScoreText || !scoreChart || !playChart) return;
+
+  const record = getQuizStatsRecord(quiz.id);
+  const recentHistory = record.history.slice(-12);
+
+  highScoreText.textContent = `${record.bestScore} / ${quiz.answers.length}`;
+  highScoreTime.textContent = record.bestTimeTaken !== null ? `Time: ${formatStatTime(record.bestTimeTaken)}` : "Time: --";
+  scoreSummary.textContent = record.history.length ? `${record.history.length} recorded play${record.history.length === 1 ? "" : "s"}` : "No plays yet";
+  playSummary.textContent = `${record.plays} total play${record.plays === 1 ? "" : "s"}`;
+
+  scoreChart.innerHTML = buildMiniBarChart(recentHistory, (item) => item.score, {
+    maxValue: quiz.answers.length,
+    getLabel: (item) => item.score,
+    getTitle: (item, index) => `Play ${record.history.length - recentHistory.length + index + 1}: ${item.score}/${quiz.answers.length}`
+  });
+
+  playChart.innerHTML = buildMiniBarChart(recentHistory, (_, index) => index + 1, {
+    maxValue: Math.max(1, recentHistory.length),
+    getLabel: (_, index) => index + 1,
+    getTitle: (item, index) => `Play ${record.history.length - recentHistory.length + index + 1}${item.playedAt ? ` - ${new Date(item.playedAt).toLocaleDateString()}` : ""}`
+  });
+}
+
 function getCustomQuizzes() {
   try {
     const parsed = JSON.parse(localStorage.getItem(CUSTOM_QUIZZES_STORAGE_KEY) || "[]");
@@ -182,10 +336,10 @@ function getMarketplaceQuizzes() {
 }
 
 function getQuizProgressFromStats(quiz) {
-  const stats = getStats();
-  const quizStats = stats[quiz.id] || { bestScore: 0, plays: 0, history: [] };
+  const quizStats = getQuizStatsRecord(quiz.id);
   return {
     bestScore: quizStats.bestScore || 0,
+    bestTimeTaken: quizStats.bestTimeTaken,
     plays: quizStats.plays || 0,
     total: quiz.answers.length,
     percentage: quiz.answers.length ? Math.round(((quizStats.bestScore || 0) / quiz.answers.length) * 100) : 0,
@@ -470,6 +624,8 @@ function renderQuizPage() {
   bestScore.textContent = progress.bestScore;
   timesPlayed.textContent = progress.plays;
   totalCount.textContent = quiz.answers.length;
+  renderQuizPerformancePanel(quiz);
+  loadLeaderboard(quiz);
 
   let found = [];
   let timeLeft = quiz.timeLimit;
@@ -642,16 +798,33 @@ function renderQuizPage() {
     pauseOverlay.classList.add("hidden");
     paused = false;
 
+    const score = found.length;
+    const timeTaken = Math.max(0, quiz.timeLimit - timeLeft);
+    const playedAt = new Date().toISOString();
     const stats = getStats();
-    const current = stats[quiz.id] || { bestScore: 0, plays: 0, history: [] };
+    const current = getQuizStatsRecord(quiz.id);
+    const previousBest = current.bestScore || 0;
+    const previousBestTime = current.bestTimeTaken;
+    const isNewBest = score > previousBest || (score === previousBest && (previousBestTime === null || timeTaken < previousBestTime));
+
     current.plays += 1;
-    current.bestScore = Math.max(current.bestScore, found.length);
-    current.history = [...(current.history || []), found.length].slice(-20);
+    current.bestScore = isNewBest ? score : previousBest;
+    current.bestTimeTaken = isNewBest ? timeTaken : previousBestTime;
+    current.history = [...(current.history || []), { score, timeTaken, playedAt, reason }].slice(-50);
+    current.recentPlays = [...(current.recentPlays || []), { quizId: quiz.id, title: quiz.title, score, total: quiz.answers.length, timeTaken, playedAt }].slice(-5);
     stats[quiz.id] = current;
+
+    const globalRecent = Array.isArray(stats.__recentPlays) ? stats.__recentPlays : [];
+    stats.__recentPlays = [{ quizId: quiz.id, title: quiz.title, score, total: quiz.answers.length, timeTaken, playedAt }, ...globalRecent]
+      .filter((item, index, arr) => index === arr.findIndex((other) => other.quizId === item.quizId && other.playedAt === item.playedAt))
+      .slice(0, 5);
+
     setStats(stats);
 
     bestScore.textContent = current.bestScore;
     timesPlayed.textContent = current.plays;
+    renderQuizPerformancePanel(quiz);
+    saveLeaderboardScore(quiz, score, timeTaken).then(() => loadLeaderboard(quiz));
     updateDisplay();
   }
 
