@@ -78,6 +78,38 @@
           <button class="end-button" id="endBtn" type="button" disabled>End</button>
         </div>
       </section>
+
+      <section class="quiz-performance-panel" id="quizPerformancePanel">
+        <div class="quiz-performance-card high-score-card">
+          <span class="stat-label">Your high score</span>
+          <strong id="personalHighScoreText">0 / 0</strong>
+          <p id="personalHighScoreTime">Time: --</p>
+        </div>
+
+        <div class="quiz-performance-card">
+          <div class="split-row mini-chart-heading">
+            <h3>Score progression</h3>
+            <span class="subtle" id="scoreProgressionSummary">No plays yet</span>
+          </div>
+          <div class="mini-chart" id="scoreProgressionChart"></div>
+        </div>
+
+        <div class="quiz-performance-card">
+          <div class="split-row mini-chart-heading">
+            <h3>Play history</h3>
+            <span class="subtle" id="playHistorySummary">0 plays</span>
+          </div>
+          <div class="mini-chart play-chart" id="playHistoryChart"></div>
+        </div>
+
+        <div class="quiz-performance-card leaderboard-card">
+          <div class="split-row mini-chart-heading">
+            <h3>All-time leaderboard</h3>
+            <span class="subtle">Top 10</span>
+          </div>
+          <div class="leaderboard-list" id="leaderboardList">Loading leaderboard...</div>
+        </div>
+      </section>
     </main>
   </div>
   
