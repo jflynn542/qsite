@@ -127,23 +127,29 @@ async function saveLeaderboardScore(quiz, score, timeTaken) {
 
 async function loadLeaderboard(quiz) {
   const leaderboardList = document.getElementById("leaderboardList");
-  if (!leaderboardList) return;
+  if (!leaderboardList) return [];
 
   try {
     const { db } = await import("./js/firebase-config.js");
-    const { collection, getDocs, query, orderBy, limit } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-    const scoresQuery = query(
-      collection(db, "quizLeaderboards", quiz.id, "scores"),
-      orderBy("score", "desc"),
-      orderBy("timeTaken", "asc"),
-      limit(10)
-    );
-    const snapshot = await getDocs(scoresQuery);
-    const rows = snapshot.docs.map((doc) => doc.data());
+    const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+
+    // Fetch first, then sort in the browser. This avoids needing a Firestore composite index
+    // for score desc + timeTaken asc, and also gives the live pace tracker the #1 score.
+    const snapshot = await getDocs(collection(db, "quizLeaderboards", quiz.id, "scores"));
+    const rows = snapshot.docs
+      .map((doc) => doc.data())
+      .sort((a, b) => {
+        const scoreDiff = (Number(b.score) || 0) - (Number(a.score) || 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        const aTime = Number.isFinite(Number(a.timeTaken)) ? Number(a.timeTaken) : Number.MAX_SAFE_INTEGER;
+        const bTime = Number.isFinite(Number(b.timeTaken)) ? Number(b.timeTaken) : Number.MAX_SAFE_INTEGER;
+        return aTime - bTime;
+      })
+      .slice(0, 10);
 
     if (!rows.length) {
       leaderboardList.innerHTML = `<div class="empty-state">No leaderboard scores yet.</div>`;
-      return;
+      return [];
     }
 
     leaderboardList.innerHTML = rows.map((row, index) => `
@@ -154,9 +160,12 @@ async function loadLeaderboard(quiz) {
         <small>${formatStatTime(row.timeTaken)}</small>
       </div>
     `).join("");
+
+    return rows;
   } catch (error) {
     console.error("Could not load leaderboard:", error);
-    leaderboardList.innerHTML = `<div class="empty-state">Leaderboard unavailable. If this is your first time using it, Firestore may ask you to create an index for score and timeTaken.</div>`;
+    leaderboardList.innerHTML = `<div class="empty-state">Leaderboard unavailable. Check the browser console for the exact Firestore error.</div>`;
+    return [];
   }
 }
 
@@ -593,6 +602,8 @@ function renderQuizPage() {
   const timerDisplay = document.getElementById("timerDisplay");
   const bestScore = document.getElementById("bestScore");
   const timesPlayed = document.getElementById("timesPlayed");
+  const paceStatBox = document.getElementById("paceStatBox");
+  const paceStatLabel = document.getElementById("paceStatLabel");
   const startBtn = document.getElementById("startBtn");
   const endBtn = document.getElementById("endBtn");
   const labelLayer = document.getElementById("labelLayer");
@@ -625,7 +636,13 @@ function renderQuizPage() {
   timesPlayed.textContent = progress.plays;
   totalCount.textContent = quiz.answers.length;
   renderQuizPerformancePanel(quiz);
-  loadLeaderboard(quiz);
+
+  let globalHighScoreTarget = null;
+
+  loadLeaderboard(quiz).then((rows) => {
+    globalHighScoreTarget = rows && rows.length ? rows[0] : null;
+    updatePaceTracker();
+  });
 
   let found = [];
   let timeLeft = quiz.timeLimit;
@@ -644,6 +661,50 @@ function renderQuizPage() {
     const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
     const secs = (seconds % 60).toString().padStart(2, "0");
     return `${mins}:${secs}`;
+  }
+
+  function resetPaceTracker() {
+    if (paceStatLabel) paceStatLabel.textContent = "Played";
+    if (timesPlayed) timesPlayed.textContent = getQuizProgressFromStats(quiz).plays;
+    if (paceStatBox) {
+      paceStatBox.classList.remove("pace-on-track", "pace-behind", "pace-neutral");
+    }
+  }
+
+  function updatePaceTracker() {
+    if (!timesPlayed) return;
+
+    if (!started || finished) {
+      resetPaceTracker();
+      return;
+    }
+
+    if (paceStatLabel) paceStatLabel.textContent = "Pace";
+
+    const targetScore = Number(globalHighScoreTarget?.score) || 0;
+    const targetTime = Number(globalHighScoreTarget?.timeTaken);
+
+    if (!targetScore || !Number.isFinite(targetTime) || targetTime <= 0) {
+      timesPlayed.textContent = "--";
+      if (paceStatBox) {
+        paceStatBox.classList.remove("pace-on-track", "pace-behind");
+        paceStatBox.classList.add("pace-neutral");
+      }
+      return;
+    }
+
+    const elapsed = Math.max(0, quiz.timeLimit - timeLeft);
+    const secondsPerAnswer = targetTime / targetScore;
+    const expectedScore = Math.min(targetScore, Math.floor(elapsed / secondsPerAnswer));
+    const difference = found.length - expectedScore;
+
+    timesPlayed.textContent = `${difference >= 0 ? "+" : ""}${difference}`;
+
+    if (paceStatBox) {
+      paceStatBox.classList.toggle("pace-on-track", difference >= 0);
+      paceStatBox.classList.toggle("pace-behind", difference < 0);
+      paceStatBox.classList.remove("pace-neutral");
+    }
   }
 
   function getMapCoordinate(entry, primaryKey, fallbackKeys = []) {
@@ -671,6 +732,7 @@ function renderQuizPage() {
 
     const percentage = quiz.answers.length ? Math.round((found.length / quiz.answers.length) * 100) : 0;
     progressBar.style.width = `${percentage}%`;
+    updatePaceTracker();
 
     foundAnswers.innerHTML = found.length
       ? found
@@ -822,9 +884,14 @@ function renderQuizPage() {
     setStats(stats);
 
     bestScore.textContent = current.bestScore;
-    timesPlayed.textContent = current.plays;
+    resetPaceTracker();
     renderQuizPerformancePanel(quiz);
-    saveLeaderboardScore(quiz, score, timeTaken).then(() => loadLeaderboard(quiz));
+    saveLeaderboardScore(quiz, score, timeTaken).then(() => {
+      loadLeaderboard(quiz).then((rows) => {
+        globalHighScoreTarget = rows && rows.length ? rows[0] : null;
+        updatePaceTracker();
+      });
+    });
     updateDisplay();
   }
 
@@ -852,6 +919,7 @@ function renderQuizPage() {
     timer = setInterval(() => {
       timeLeft -= 1;
       timerDisplay.textContent = formatTime(timeLeft);
+      updatePaceTracker();
 
       if (timeLeft <= 0) {
         finishQuiz("time");
@@ -918,6 +986,7 @@ function renderQuizPage() {
     timer = setInterval(() => {
       timeLeft -= 1;
       timerDisplay.textContent = formatTime(timeLeft);
+      updatePaceTracker();
 
       if (timeLeft <= 0) {
         finishQuiz("time");
