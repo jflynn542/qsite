@@ -1,4 +1,5 @@
 import { auth, db } from "./firebase-config.js";
+import { loadUserData, getStatsData } from "./user-data.js";
 import {
   onAuthStateChanged,
   signOut
@@ -10,16 +11,11 @@ import {
   setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const STATS_STORAGE_KEY = "quizHubStats";
 const accountBox = document.getElementById("accountBox");
 const logoutBtn = document.getElementById("logoutBtn");
 
 function getStats() {
-  try {
-    return JSON.parse(localStorage.getItem(STATS_STORAGE_KEY) || "{}");
-  } catch {
-    return {};
-  }
+  return getStatsData();
 }
 
 function formatStatTime(seconds) {
@@ -96,6 +92,8 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
+  await loadUserData();
+
   const userRef = doc(db, "users", user.uid);
   const userSnap = await getDoc(userRef);
 
@@ -104,7 +102,8 @@ onAuthStateChanged(auth, async (user) => {
       name: user.displayName,
       email: user.email,
       photo: user.photoURL,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      stats: getStatsData()
     });
   }
 
