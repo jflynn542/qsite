@@ -1,5 +1,4 @@
-const BUILDER_STORAGE_KEY = "quizHubBuilderDraft";
-const CUSTOM_QUIZZES_STORAGE_KEY = "quizHubCustomQuizzes";
+import { loadUserData, getBuilderDraft, setBuilderDraft, getCustomQuizzesData, setCustomQuizzesData, flushUserData } from "./js/user-data.js";
 
 function safeSlug(value) {
   return value
@@ -31,22 +30,17 @@ function defaultBuilderState() {
 }
 
 function loadBuilderState() {
-  const raw = localStorage.getItem(BUILDER_STORAGE_KEY);
-  if (!raw) return defaultBuilderState();
-  try {
-    const parsed = JSON.parse(raw);
-    return {
-      ...defaultBuilderState(),
-      ...parsed,
-      answers: Array.isArray(parsed.answers) ? parsed.answers : []
-    };
-  } catch {
-    return defaultBuilderState();
-  }
+  const parsed = getBuilderDraft();
+  if (!parsed) return defaultBuilderState();
+  return {
+    ...defaultBuilderState(),
+    ...parsed,
+    answers: Array.isArray(parsed.answers) ? parsed.answers : []
+  };
 }
 
 function saveBuilderState(state) {
-  localStorage.setItem(BUILDER_STORAGE_KEY, JSON.stringify(state));
+  setBuilderDraft(state);
 }
 
 async function getSharedQuizForEditing(quizId) {
@@ -59,15 +53,8 @@ async function getSharedQuizForEditing(quizId) {
 }
 
 function getLocalQuizForEditing(quizId) {
-  try {
-    const customQuizzes = JSON.parse(localStorage.getItem(CUSTOM_QUIZZES_STORAGE_KEY) || "[]");
-    if (Array.isArray(customQuizzes)) {
-      const customQuiz = customQuizzes.find((quiz) => quiz.id === quizId);
-      if (customQuiz) return { ...customQuiz, source: "local" };
-    }
-  } catch {
-    // Ignore broken localStorage data.
-  }
+  const customQuiz = getCustomQuizzesData().find((quiz) => quiz.id === quizId);
+  if (customQuiz) return { ...customQuiz, source: "account" };
 
   if (typeof quizzes !== "undefined") {
     const builtInQuiz = quizzes.find((quiz) => quiz.id === quizId);
@@ -126,6 +113,7 @@ function normaliseAliases(text) {
 async function renderBuilderPage() {
   const page = document.body.dataset.page;
   if (page !== "builder") return;
+  await loadUserData();
 
   const quizTypeSelect = document.getElementById("builderQuizType");
   const quizIdInput = document.getElementById("builderQuizId");
@@ -417,25 +405,10 @@ async function renderBuilderPage() {
       return;
     }
 
-    if (state.editingSource === "built-in") {
-      const customQuizzes = JSON.parse(localStorage.getItem(CUSTOM_QUIZZES_STORAGE_KEY) || "[]");
-      const updatedQuiz = { ...quiz, id: state.editingQuizId || quiz.id, editedFromBuiltIn: true };
-      const existingIndex = customQuizzes.findIndex((item) => item.id === updatedQuiz.id);
-      if (existingIndex >= 0) {
-        customQuizzes[existingIndex] = updatedQuiz;
-      } else {
-        customQuizzes.push(updatedQuiz);
-      }
-      localStorage.setItem(CUSTOM_QUIZZES_STORAGE_KEY, JSON.stringify(customQuizzes));
-      window.alert("Built-in quiz edited as a local custom copy.");
-      window.location.href = "add-quizzes.html";
-      return;
-    }
-
-    if (state.editingSource === "local") {
-      const customQuizzes = JSON.parse(localStorage.getItem(CUSTOM_QUIZZES_STORAGE_KEY) || "[]");
+    if (state.editingSource === "built-in" || state.editingSource === "account") {
+      const customQuizzes = getCustomQuizzesData();
       const originalId = state.editingQuizId || quiz.id;
-      const updatedQuiz = { ...quiz, id: originalId };
+      const updatedQuiz = { ...quiz, id: originalId, editedFromBuiltIn: state.editingSource === "built-in" };
       const existingIndex = customQuizzes.findIndex((item) => item.id === originalId);
 
       if (existingIndex >= 0) {
@@ -444,8 +417,9 @@ async function renderBuilderPage() {
         customQuizzes.push(updatedQuiz);
       }
 
-      localStorage.setItem(CUSTOM_QUIZZES_STORAGE_KEY, JSON.stringify(customQuizzes));
-      window.alert("Quiz updated locally.");
+      setCustomQuizzesData(customQuizzes);
+      await flushUserData();
+      window.alert(state.editingSource === "built-in" ? "Built-in quiz edited as an account copy." : "Quiz updated in your account.");
       window.location.href = "add-quizzes.html";
       return;
     }
@@ -489,6 +463,7 @@ async function renderBuilderPage() {
 
     await setDoc(quizRef, onlineQuiz, { merge: true });
 
+    await flushUserData();
     window.alert(state.editingQuizId ? "Quiz updated online." : "Quiz uploaded online. Other users can now access it.");
     window.location.href = "add-quizzes.html";
   }
