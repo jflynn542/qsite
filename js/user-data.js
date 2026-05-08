@@ -135,21 +135,28 @@ export async function loadUserData() {
       return userData;
     }
 
-    const userRef = doc(db, "users", currentUser.uid);
-    const snap = await getDoc(userRef);
-    const cloudData = snap.exists() ? normaliseUserData(snap.data()) : normaliseUserData();
+    try {
+      const userRef = doc(db, "users", currentUser.uid);
+      const snap = await getDoc(userRef);
+      const cloudData = snap.exists() ? normaliseUserData(snap.data()) : normaliseUserData();
 
-    // Merge local browser data into the account once, so existing progress/library is not lost.
-    userData = normaliseUserData({
-      stats: { ...localData.stats, ...cloudData.stats },
-      libraryIds: [...localData.libraryIds, ...cloudData.libraryIds],
-      autoAddedIds: [...localData.autoAddedIds, ...cloudData.autoAddedIds],
-      deletedQuizIds: [...localData.deletedQuizIds, ...cloudData.deletedQuizIds],
-      builderDraft: cloudData.builderDraft || localData.builderDraft,
-      customQuizzes: [...localData.customQuizzes, ...cloudData.customQuizzes].filter((quiz, index, arr) => quiz && quiz.id && index === arr.findIndex((other) => other && other.id === quiz.id))
-    });
+      // Merge local browser data into the account once, so existing progress/library is not lost.
+      userData = normaliseUserData({
+        stats: { ...localData.stats, ...cloudData.stats },
+        libraryIds: [...localData.libraryIds, ...cloudData.libraryIds],
+        autoAddedIds: [...localData.autoAddedIds, ...cloudData.autoAddedIds],
+        deletedQuizIds: [...localData.deletedQuizIds, ...cloudData.deletedQuizIds],
+        builderDraft: cloudData.builderDraft || localData.builderDraft,
+        customQuizzes: [...localData.customQuizzes, ...cloudData.customQuizzes].filter((quiz, index, arr) => quiz && quiz.id && index === arr.findIndex((other) => other && other.id === quiz.id))
+      });
 
-    await saveNow();
+      await saveNow();
+    } catch (error) {
+      console.error("Could not load account data from Firestore. Using local fallback:", error);
+      userData = localData;
+      saveLocalMirror();
+    }
+
     loaded = true;
     return userData;
   })();
