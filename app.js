@@ -1,8 +1,5 @@
-const STATS_STORAGE_KEY = "quizHubStats";
-const LIBRARY_STORAGE_KEY = "quizHubLibrary";
-const AUTO_ADDED_STORAGE_KEY = "quizHubAutoAdded";
-const CUSTOM_QUIZZES_STORAGE_KEY = "quizHubCustomQuizzes";
-const DELETED_QUIZZES_STORAGE_KEY = "quizHubDeletedQuizzes";
+import { loadUserData, getStatsData, setStatsData, getIdList, setIdList, getCustomQuizzesData, setCustomQuizzesData } from "./js/user-data.js";
+
 const DELETE_QUIZ_PASSWORD = "delete";
 
 let sharedQuizzes = [];
@@ -29,11 +26,11 @@ async function loadSharedQuizzes() {
 }
 
 function getStats() {
-  return JSON.parse(localStorage.getItem(STATS_STORAGE_KEY) || "{}");
+  return getStatsData();
 }
 
 function setStats(stats) {
-  localStorage.setItem(STATS_STORAGE_KEY, JSON.stringify(stats));
+  setStatsData(stats);
 }
 
 
@@ -200,24 +197,19 @@ function renderQuizPerformancePanel(quiz) {
 }
 
 function getCustomQuizzes() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(CUSTOM_QUIZZES_STORAGE_KEY) || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  return getCustomQuizzesData();
 }
 
 function setCustomQuizzes(customQuizzes) {
-  localStorage.setItem(CUSTOM_QUIZZES_STORAGE_KEY, JSON.stringify(customQuizzes));
+  setCustomQuizzesData(customQuizzes);
 }
 
 function getDeletedQuizIds() {
-  return getStoredIds(DELETED_QUIZZES_STORAGE_KEY);
+  return getIdList("deletedQuizIds");
 }
 
 function setDeletedQuizIds(ids) {
-  localStorage.setItem(DELETED_QUIZZES_STORAGE_KEY, JSON.stringify([...new Set(ids)]));
+  setIdList("deletedQuizIds", ids);
 }
 
 function getAllQuizzes() {
@@ -260,8 +252,8 @@ function deleteQuizFromCatalogue(id) {
     setDeletedQuizIds([...getDeletedQuizIds(), id]);
   }
   removeQuizFromLibrary(id);
-  const autoAdded = getStoredIds(AUTO_ADDED_STORAGE_KEY).filter((quizId) => quizId !== id);
-  localStorage.setItem(AUTO_ADDED_STORAGE_KEY, JSON.stringify(autoAdded));
+  const autoAdded = getIdList("autoAddedIds").filter((quizId) => quizId !== id);
+  setIdList("autoAddedIds", autoAdded);
 }
 
 function getCategoryById(id) {
@@ -280,25 +272,16 @@ function normaliseText(text) {
     .trim();
 }
 
-function getStoredIds(key) {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(key) || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
 function uniqueValidQuizIds(ids) {
   return [...new Set(ids)].filter((id) => Boolean(getQuizById(id)));
 }
 
 function getLibraryIds() {
-  return uniqueValidQuizIds(getStoredIds(LIBRARY_STORAGE_KEY));
+  return uniqueValidQuizIds(getIdList("libraryIds"));
 }
 
 function setLibraryIds(ids) {
-  localStorage.setItem(LIBRARY_STORAGE_KEY, JSON.stringify(uniqueValidQuizIds(ids)));
+  setIdList("libraryIds", uniqueValidQuizIds(ids));
 }
 
 function addQuizToLibrary(quizId) {
@@ -314,7 +297,7 @@ function removeQuizFromLibrary(quizId) {
 }
 
 function syncAutoAddedQuizzes() {
-  const alreadyAutoAdded = new Set(getStoredIds(AUTO_ADDED_STORAGE_KEY));
+  const alreadyAutoAdded = new Set(getIdList("autoAddedIds"));
   const libraryIds = getLibraryIds();
   let changed = false;
 
@@ -330,7 +313,7 @@ function syncAutoAddedQuizzes() {
 
   if (changed) {
     setLibraryIds(libraryIds);
-    localStorage.setItem(AUTO_ADDED_STORAGE_KEY, JSON.stringify([...alreadyAutoAdded]));
+    setIdList("autoAddedIds", [...alreadyAutoAdded]);
   }
 }
 
@@ -998,7 +981,7 @@ function renderQuizPage() {
 }
 
 async function initPage() {
-  await loadSharedQuizzes();
+  await Promise.all([loadUserData(), loadSharedQuizzes()]);
 
   syncAutoAddedQuizzes();
 
