@@ -1,4 +1,4 @@
-const quizCategories = [
+var quizCategories = [
   {
     id: "Countries",
     title: "Countries",
@@ -21,4 +21,4 @@ const quizCategories = [
   }
 ];
 
-const quizzes = [];
+var quizzes = [];
