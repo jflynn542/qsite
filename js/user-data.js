@@ -2,14 +2,16 @@ import { auth, db } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const LOCAL_KEYS = {
-  stats: "quizHubStats",
-  libraryIds: "quizHubLibrary",
-  autoAddedIds: "quizHubAutoAdded",
-  deletedQuizIds: "quizHubDeletedQuizzes",
-  builderDraft: "quizHubBuilderDraft",
-  customQuizzes: "quizHubCustomQuizzes"
-};
+// These are only here so old browser-stored data can be removed.
+// User-specific website data should now come from Firestore only.
+const LEGACY_LOCAL_KEYS = [
+  "quizHubStats",
+  "quizHubLibrary",
+  "quizHubAutoAdded",
+  "quizHubDeletedQuizzes",
+  "quizHubBuilderDraft",
+  "quizHubCustomQuizzes"
+];
 
 const DEFAULT_DATA = {
   stats: {},
@@ -21,29 +23,27 @@ const DEFAULT_DATA = {
 };
 
 let currentUser = null;
-let userData = { ...DEFAULT_DATA };
+let userData = cloneDefaultData();
 let loaded = false;
 let loadPromise = null;
 let saveTimer = null;
 
-function readLocalJson(key, fallback) {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(key) || "null");
-    return parsed === null ? fallback : parsed;
-  } catch {
-    return fallback;
-  }
+function cloneDefaultData() {
+  return {
+    stats: {},
+    libraryIds: [],
+    autoAddedIds: [],
+    deletedQuizIds: [],
+    builderDraft: null,
+    customQuizzes: []
+  };
 }
 
-function writeLocalJson(key, value) {
+function clearLegacyLocalStorage() {
   try {
-    if (value === null || typeof value === "undefined") {
-      localStorage.removeItem(key);
-    } else {
-      localStorage.setItem(key, JSON.stringify(value));
-    }
+    LEGACY_LOCAL_KEYS.forEach((key) => localStorage.removeItem(key));
   } catch {
-    // Local fallback failed. Firestore will still be attempted for signed-in users.
+    // Ignore storage errors. The site must still work from Firestore.
   }
 }
 
@@ -62,26 +62,6 @@ function normaliseUserData(data = {}) {
   };
 }
 
-function getLocalData() {
-  return normaliseUserData({
-    stats: readLocalJson(LOCAL_KEYS.stats, {}),
-    libraryIds: readLocalJson(LOCAL_KEYS.libraryIds, []),
-    autoAddedIds: readLocalJson(LOCAL_KEYS.autoAddedIds, []),
-    deletedQuizIds: readLocalJson(LOCAL_KEYS.deletedQuizIds, []),
-    builderDraft: readLocalJson(LOCAL_KEYS.builderDraft, null),
-    customQuizzes: readLocalJson(LOCAL_KEYS.customQuizzes, [])
-  });
-}
-
-function saveLocalMirror() {
-  writeLocalJson(LOCAL_KEYS.stats, userData.stats || {});
-  writeLocalJson(LOCAL_KEYS.libraryIds, userData.libraryIds || []);
-  writeLocalJson(LOCAL_KEYS.autoAddedIds, userData.autoAddedIds || []);
-  writeLocalJson(LOCAL_KEYS.deletedQuizIds, userData.deletedQuizIds || []);
-  writeLocalJson(LOCAL_KEYS.builderDraft, userData.builderDraft || null);
-  writeLocalJson(LOCAL_KEYS.customQuizzes, userData.customQuizzes || []);
-}
-
 function waitForAuth() {
   return new Promise((resolve) => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -91,11 +71,28 @@ function waitForAuth() {
   });
 }
 
-async function saveNow() {
-  if (!currentUser) {
-    saveLocalMirror();
-    return;
+// If the Firebase auth user changes while the page is open, immediately drop
+// the old in-memory data so it cannot be shown under another account.
+onAuthStateChanged(auth, (user) => {
+  const oldUid = currentUser?.uid || null;
+  const newUid = user?.uid || null;
+
+  if (loaded && oldUid !== newUid) {
+    clearTimeout(saveTimer);
+    currentUser = user || null;
+    userData = cloneDefaultData();
+    loaded = false;
+    loadPromise = null;
+    clearLegacyLocalStorage();
   }
+});
+
+async function saveNow() {
+  clearLegacyLocalStorage();
+
+  // Signed-out data should not be persisted anywhere. This prevents the next
+  // signed-in account from inheriting saved quizzes, stats, or draft data.
+  if (!currentUser) return;
 
   const userRef = doc(db, "users", currentUser.uid);
   await setDoc(userRef, {
@@ -110,8 +107,6 @@ async function saveNow() {
     customQuizzes: Array.isArray(userData.customQuizzes) ? userData.customQuizzes : [],
     updatedAt: serverTimestamp()
   }, { merge: true });
-
-  saveLocalMirror();
 }
 
 function queueSave() {
@@ -126,11 +121,11 @@ export async function loadUserData() {
   if (loadPromise) return loadPromise;
 
   loadPromise = (async () => {
+    clearLegacyLocalStorage();
     currentUser = await waitForAuth();
-    const localData = getLocalData();
 
     if (!currentUser) {
-      userData = localData;
+      userData = cloneDefaultData();
       loaded = true;
       return userData;
     }
@@ -138,23 +133,10 @@ export async function loadUserData() {
     try {
       const userRef = doc(db, "users", currentUser.uid);
       const snap = await getDoc(userRef);
-      const cloudData = snap.exists() ? normaliseUserData(snap.data()) : normaliseUserData();
-
-      // Merge local browser data into the account once, so existing progress/library is not lost.
-      userData = normaliseUserData({
-        stats: { ...localData.stats, ...cloudData.stats },
-        libraryIds: [...localData.libraryIds, ...cloudData.libraryIds],
-        autoAddedIds: [...localData.autoAddedIds, ...cloudData.autoAddedIds],
-        deletedQuizIds: [...localData.deletedQuizIds, ...cloudData.deletedQuizIds],
-        builderDraft: cloudData.builderDraft || localData.builderDraft,
-        customQuizzes: [...localData.customQuizzes, ...cloudData.customQuizzes].filter((quiz, index, arr) => quiz && quiz.id && index === arr.findIndex((other) => other && other.id === quiz.id))
-      });
-
-      await saveNow();
+      userData = snap.exists() ? normaliseUserData(snap.data()) : cloneDefaultData();
     } catch (error) {
-      console.error("Could not load account data from Firestore. Using local fallback:", error);
-      userData = localData;
-      saveLocalMirror();
+      console.error("Could not load account data from Firestore:", error);
+      userData = cloneDefaultData();
     }
 
     loaded = true;
