@@ -398,10 +398,34 @@ function renderHomePage() {
   const progressBar = document.getElementById("overallProgressBar");
   const overallStats = document.getElementById("overallStats");
   const homeCategorySummary = document.getElementById("homeCategorySummary");
+  const recentQuizList = document.getElementById("recentQuizList");
 
   if (!categoryGrid) return;
 
   const libraryQuizzes = getLibraryQuizzes();
+  const libraryIdSet = new Set(libraryQuizzes.map((quiz) => quiz.id));
+  const recentPlays = (Array.isArray(getStats().__recentPlays) ? getStats().__recentPlays : [])
+    .filter((item) => libraryIdSet.has(item.quizId))
+    .slice(0, 5);
+
+  if (recentQuizList) {
+    recentQuizList.innerHTML = recentPlays.length
+      ? recentPlays.map((item) => {
+          const quiz = getQuizById(item.quizId);
+          if (!quiz) return "";
+          return `
+            <a class="recent-quiz-card" href="quiz.html?id=${encodeURIComponent(quiz.id)}">
+              <div>
+                <h3>${quiz.title}</h3>
+                <p>${Number(item.score) || 0} / ${Number(item.total) || quiz.answers.length} in ${formatStatTime(item.timeTaken)}</p>
+              </div>
+              <span class="meta-pill">Play again</span>
+            </a>
+          `;
+        }).join("")
+      : `<div class="empty-state panel-like-empty"><h3>No recently played quizzes yet.</h3><p>Play a quiz and it will appear here.</p></div>`;
+  }
+
   const overall = getOverallProgress(libraryQuizzes);
 
   progressText.textContent = `${overall.percentage}%`;
@@ -533,6 +557,48 @@ function renderMarketplacePage() {
   draw();
 }
 
+function renderLibraryPage() {
+  const list = document.getElementById("libraryQuizList");
+  const searchInput = document.getElementById("librarySearchInput");
+  const summary = document.getElementById("librarySummary");
+  if (!list || !searchInput) return;
+
+  function draw() {
+    const searchTerm = normaliseText(searchInput.value || "");
+    const filtered = getLibraryQuizzes().filter((quiz) => {
+      const searchableText = normaliseText(`${quiz.title} ${quiz.description || ""}`);
+      return !searchTerm || searchableText.includes(searchTerm);
+    });
+
+    if (summary) {
+      summary.textContent = `${filtered.length} quiz${filtered.length === 1 ? "" : "zes"}`;
+    }
+
+    if (!filtered.length) {
+      list.innerHTML = `
+        <div class="empty-state panel-like-empty">
+          <h3>No quizzes match your search.</h3>
+          <p>Try a different search, or add more quizzes to your library.</p>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = filtered.map((quiz) => createQuizCardMarkup(quiz, {
+      actionHtml: `
+        ${isEditableQuiz(quiz.id) ? `<button class="ghost-button add-remove-button" type="button" data-edit-quiz="${quiz.id}">Edit</button>` : ""}
+        <button class="ghost-button add-remove-button" type="button" data-remove-quiz="${quiz.id}">Remove</button>
+      `
+    })).join("");
+
+    attachLibraryActionHandlers(list);
+    attachEditQuizHandlers(list);
+  }
+
+  searchInput.addEventListener("input", draw);
+  draw();
+}
+
 function renderCategoryPage() {
   const params = new URLSearchParams(window.location.search);
   const categoryId = params.get("category");
@@ -598,6 +664,11 @@ function renderQuizPage() {
   const pauseBtn = document.getElementById("pauseBtn");
   const resumeBtn = document.getElementById("resumeBtn");
   const pauseOverlay = document.getElementById("pauseOverlay");
+  const finishOverlay = document.getElementById("finishOverlay");
+  const finishScoreText = document.getElementById("finishScoreText");
+  const finishTimeText = document.getElementById("finishTimeText");
+  const finishPlayAgainBtn = document.getElementById("finishPlayAgainBtn");
+  const finishHomeBtn = document.getElementById("finishHomeBtn");
 
   document.getElementById("quizCategory").textContent = category ? category.title : "Quiz";
   document.getElementById("quizTitle").textContent = quiz.title;
@@ -750,8 +821,8 @@ function renderQuizPage() {
 
               return `
                 <div class="table-answer-pair">
-                  <div class="table-hint-cell" title="${hintText}">${hintText}</div>
                   <div class="${answerClass}" title="${entry.answer}">${showAnswer ? entry.answer : ""}</div>
+                  <div class="table-hint-cell" title="${hintText}">${hintText}</div>
                 </div>
               `;
             }).join("")}
@@ -869,11 +940,17 @@ function renderQuizPage() {
     updatePaceTracker();
     renderQuizPerformancePanel(quiz);
     saveLeaderboardScore(quiz, score, timeTaken).then(() => loadLeaderboard(quiz));
+
+    if (finishScoreText) finishScoreText.textContent = `${score} / ${quiz.answers.length} answers`;
+    if (finishTimeText) finishTimeText.textContent = `Time: ${formatStatTime(timeTaken)}`;
+    if (finishOverlay) finishOverlay.classList.remove("hidden");
+
     updateDisplay();
   }
 
   function startQuiz() {
     clearInterval(timer);
+    if (finishOverlay) finishOverlay.classList.add("hidden");
 
     found = [];
     timeLeft = quiz.timeLimit;
@@ -955,6 +1032,19 @@ function renderQuizPage() {
   pauseOverlay.classList.remove("hidden");
   });
 
+  if (finishPlayAgainBtn) {
+    finishPlayAgainBtn.addEventListener("click", () => {
+      if (finishOverlay) finishOverlay.classList.add("hidden");
+      startQuiz();
+    });
+  }
+
+  if (finishHomeBtn) {
+    finishHomeBtn.addEventListener("click", () => {
+      window.location.href = "index.html";
+    });
+  }
+
   resumeBtn.addEventListener("click", () => {
     if (!paused) return;
 
@@ -989,6 +1079,7 @@ async function initPage() {
 
   if (page === "home") renderHomePage();
   if (page === "marketplace") renderMarketplacePage();
+  if (page === "library") renderLibraryPage();
   if (page === "category") renderCategoryPage();
   if (page === "quiz") renderQuizPage();
 }
