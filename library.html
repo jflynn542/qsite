@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All Library Quizzes</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="library">
+  <div class="site-shell">
+    <header class="site-header clean-header">
+      <div>
+        <a class="back-link" href="index.html">← Back</a>
+        <p class="eyebrow">Your library</p>
+        <h1>All quizzes</h1>
+      </div>
+      <div class="button-row wrap-row">
+        <a class="primary-link header-link" href="add-quizzes.html">Add Quizzes</a>
+        <a class="ghost-button header-link" href="builder.html">Builder</a>
+      </div>
+    </header>
+
+    <main class="main-grid narrow-gap">
+      <section class="panel">
+        <div class="section-title-row">
+          <h2>Quizzes in your library</h2>
+          <span class="subtle" id="librarySummary"></span>
+        </div>
+        <input class="search-input full-width-search" id="librarySearchInput" type="search" placeholder="Search your library" />
+        <div class="quiz-list marketplace-list" id="libraryQuizList"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="quizzes.js"></script>
+  <script type="module" src="app.js"></script>
+  <script type="module" src="js/auth.js"></script>
+</body>
+</html>
