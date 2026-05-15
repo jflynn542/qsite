@@ -1937,3 +1937,32 @@ h3 { font-size: 1.05rem; font-weight: 800; }
     flex-direction: column;
   }
 }
+
+/* =========================
+   Quiz map sizing fix
+   Makes play-screen answer text and placeholders respect the builder sizes.
+   ========================= */
+.quiz-map-inner > #labelLayer .map-label,
+#labelLayer .map-label {
+  position: absolute !important;
+  transform: translate(-50%, -50%) !important;
+  font-size: var(--quiz-label-size, 12px) !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border: none !important;
+  color: #111 !important;
+}
+
+.quiz-map-inner > #labelLayer .map-unanswered-marker,
+#labelLayer .map-unanswered-marker {
+  box-sizing: border-box !important;
+  width: var(--quiz-placeholder-size, 18px) !important;
+  height: var(--quiz-placeholder-size, 18px) !important;
+  min-width: var(--quiz-placeholder-size, 18px) !important;
+  min-height: var(--quiz-placeholder-size, 18px) !important;
+  border-width: 1px !important;
+  box-shadow: none !important;
+}
