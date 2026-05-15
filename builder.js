@@ -314,6 +314,7 @@ async function renderBuilderPage() {
           <div class="builder-answer-meta compact-answer-meta">
             <span class="meta-pill">${firstPill}</span>
             <span class="meta-pill">${secondPill}</span>
+            <button class="ghost-button small-button edit-answer-btn" data-index="${index}" type="button">Edit</button>
             <button class="ghost-button small-button remove-answer-btn" data-index="${index}" type="button">Remove</button>
           </div>
         </div>
@@ -328,6 +329,44 @@ async function renderBuilderPage() {
       });
     });
 
+
+    answerList.querySelectorAll(".edit-answer-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const index = Number(button.dataset.index);
+        const entry = state.answers[index];
+        if (!entry) return;
+
+        const answer = window.prompt("Edit answer", entry.answer || "");
+        if (answer === null) return;
+
+        const trimmedAnswer = answer.trim();
+        if (!trimmedAnswer) {
+          window.alert("Answer cannot be blank.");
+          return;
+        }
+
+        const duplicate = state.answers.some((item, itemIndex) => (item.answer || "").toLowerCase() === trimmedAnswer.toLowerCase() && itemIndex !== index);
+        if (duplicate) {
+          window.alert("Another answer already uses that text.");
+          return;
+        }
+
+        const aliasesText = window.prompt("Edit aliases, separated by commas", Array.isArray(entry.aliases) ? entry.aliases.join(", ") : "");
+        if (aliasesText === null) return;
+
+        const hint = window.prompt("Edit hint", entry.hint || "");
+        if (hint === null) return;
+
+        state.answers[index] = {
+          ...entry,
+          answer: trimmedAnswer,
+          aliases: normaliseAliases(aliasesText),
+          hint: hint.trim()
+        };
+        state.selectedIndex = index;
+        syncUI();
+      });
+    });
 
     answerList.querySelectorAll(".remove-answer-btn").forEach((button) => {
       button.addEventListener("click", () => {
@@ -355,8 +394,8 @@ async function renderBuilderPage() {
     builderTablePreview.classList.remove("hidden");
     builderTablePreview.innerHTML = state.answers.length
       ? state.answers.map((entry) => `
-          <div class="builder-table-hint-cell">${entry.hint || ""}</div>
           <div class="builder-table-cell">${entry.answer}</div>
+          <div class="builder-table-hint-cell">${entry.hint || ""}</div>
         `).join("")
       : `<div class="builder-table-empty">Add answers to preview the table.</div>`;
   }
