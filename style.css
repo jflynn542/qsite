@@ -1864,3 +1864,76 @@ h3 { font-size: 1.05rem; font-weight: 800; }
 .pace-stat-box.pace-neutral {
   background: #f7f7f7;
 }
+
+/* =========================
+   Home recently played / library page / finish modal
+   ========================= */
+
+.home-recent-section {
+  display: grid;
+  gap: 14px;
+}
+
+.recent-quiz-list {
+  display: grid;
+  gap: 12px;
+}
+
+.recent-quiz-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  background: #fff;
+  text-decoration: none;
+  color: var(--text);
+  box-shadow: var(--shadow-soft);
+}
+
+.recent-quiz-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.recent-quiz-card h3 {
+  margin: 0 0 4px;
+}
+
+.recent-quiz-card p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.full-width-search {
+  width: 100%;
+  margin: 12px 0 18px;
+}
+
+.finish-modal #finishScoreText,
+.finish-modal #finishTimeText {
+  color: var(--text);
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.modal-button-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .pause-modal {
+    min-width: min(92vw, 520px);
+  }
+
+  .recent-quiz-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
