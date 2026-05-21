@@ -10,7 +10,8 @@ const LEGACY_LOCAL_KEYS = [
   "quizHubAutoAdded",
   "quizHubDeletedQuizzes",
   "quizHubBuilderDraft",
-  "quizHubCustomQuizzes"
+  "quizHubCustomQuizzes",
+  "quizHubPlaylists"
 ];
 
 const DEFAULT_DATA = {
@@ -19,7 +20,8 @@ const DEFAULT_DATA = {
   autoAddedIds: [],
   deletedQuizIds: [],
   builderDraft: null,
-  customQuizzes: []
+  customQuizzes: [],
+  playlists: []
 };
 
 let currentUser = null;
@@ -35,7 +37,8 @@ function cloneDefaultData() {
     autoAddedIds: [],
     deletedQuizIds: [],
     builderDraft: null,
-    customQuizzes: []
+    customQuizzes: [],
+    playlists: []
   };
 }
 
@@ -58,7 +61,8 @@ function normaliseUserData(data = {}) {
     autoAddedIds: uniqueArray(data.autoAddedIds),
     deletedQuizIds: uniqueArray(data.deletedQuizIds),
     builderDraft: data.builderDraft && typeof data.builderDraft === "object" ? data.builderDraft : null,
-    customQuizzes: Array.isArray(data.customQuizzes) ? data.customQuizzes : []
+    customQuizzes: Array.isArray(data.customQuizzes) ? data.customQuizzes : [],
+    playlists: Array.isArray(data.playlists) ? data.playlists : []
   };
 }
 
@@ -105,6 +109,7 @@ async function saveNow() {
     deletedQuizIds: uniqueArray(userData.deletedQuizIds),
     builderDraft: userData.builderDraft || null,
     customQuizzes: Array.isArray(userData.customQuizzes) ? userData.customQuizzes : [],
+    playlists: Array.isArray(userData.playlists) ? userData.playlists : [],
     updatedAt: serverTimestamp()
   }, { merge: true });
 }
@@ -192,5 +197,14 @@ export function getCustomQuizzesData() {
 
 export function setCustomQuizzesData(customQuizzes) {
   userData.customQuizzes = Array.isArray(customQuizzes) ? customQuizzes : [];
+  queueSave();
+}
+
+export function getPlaylistsData() {
+  return Array.isArray(userData.playlists) ? userData.playlists : [];
+}
+
+export function setPlaylistsData(playlists) {
+  userData.playlists = Array.isArray(playlists) ? playlists : [];
   queueSave();
 }
