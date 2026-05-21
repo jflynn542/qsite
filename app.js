@@ -1,4 +1,4 @@
-import { loadUserData, getStatsData, setStatsData, getIdList, setIdList, getCustomQuizzesData, setCustomQuizzesData } from "./js/user-data.js";
+import { loadUserData, getStatsData, setStatsData, getIdList, setIdList, getCustomQuizzesData, setCustomQuizzesData, getPlaylistsData, setPlaylistsData } from "./js/user-data.js";
 
 const DELETE_QUIZ_PASSWORD = "delete";
 
@@ -276,6 +276,77 @@ function uniqueValidQuizIds(ids) {
   return [...new Set(ids)].filter((id) => Boolean(getQuizById(id)));
 }
 
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function createPlaylistId() {
+  return `playlist-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function getPlaylists() {
+  return getPlaylistsData()
+    .filter((playlist) => playlist && playlist.id && playlist.name)
+    .map((playlist) => ({
+      ...playlist,
+      quizIds: uniqueValidQuizIds(Array.isArray(playlist.quizIds) ? playlist.quizIds : [])
+    }));
+}
+
+function setPlaylists(playlists) {
+  setPlaylistsData(playlists.map((playlist) => ({
+    ...playlist,
+    name: String(playlist.name || "Untitled playlist").trim() || "Untitled playlist",
+    quizIds: uniqueValidQuizIds(Array.isArray(playlist.quizIds) ? playlist.quizIds : [])
+  })));
+}
+
+function createPlaylist(name) {
+  const cleanName = String(name || "").trim();
+  if (!cleanName) return;
+
+  setPlaylists([
+    ...getPlaylists(),
+    {
+      id: createPlaylistId(),
+      name: cleanName,
+      quizIds: [],
+      createdAt: new Date().toISOString()
+    }
+  ]);
+}
+
+function deletePlaylist(playlistId) {
+  setPlaylists(getPlaylists().filter((playlist) => playlist.id !== playlistId));
+}
+
+function addQuizToPlaylist(playlistId, quizId) {
+  setPlaylists(getPlaylists().map((playlist) => {
+    if (playlist.id !== playlistId) return playlist;
+    return { ...playlist, quizIds: uniqueValidQuizIds([...(playlist.quizIds || []), quizId]) };
+  }));
+}
+
+function removeQuizFromPlaylist(playlistId, quizId) {
+  setPlaylists(getPlaylists().map((playlist) => {
+    if (playlist.id !== playlistId) return playlist;
+    return { ...playlist, quizIds: (playlist.quizIds || []).filter((id) => id !== quizId) };
+  }));
+}
+
+function removeQuizFromAllPlaylists(quizId) {
+  setPlaylists(getPlaylists().map((playlist) => ({
+    ...playlist,
+    quizIds: (playlist.quizIds || []).filter((id) => id !== quizId)
+  })));
+}
+
 function getLibraryIds() {
   return uniqueValidQuizIds(getIdList("libraryIds"));
 }
@@ -294,6 +365,7 @@ function addQuizToLibrary(quizId) {
 
 function removeQuizFromLibrary(quizId) {
   setLibraryIds(getLibraryIds().filter((id) => id !== quizId));
+  removeQuizFromAllPlaylists(quizId);
 }
 
 function syncAutoAddedQuizzes() {
@@ -392,6 +464,96 @@ function attachLibraryActionHandlers(scope = document) {
   });
 }
 
+function renderHomePlaylists(libraryQuizzes) {
+  const playlistList = document.getElementById("playlistList");
+  const playlistForm = document.getElementById("playlistForm");
+  const playlistNameInput = document.getElementById("playlistNameInput");
+  const playlistSummary = document.getElementById("playlistSummary");
+  if (!playlistList) return;
+
+  const playlists = getPlaylists();
+  if (playlistSummary) {
+    playlistSummary.textContent = playlists.length
+      ? `${playlists.length} playlist${playlists.length === 1 ? "" : "s"}`
+      : "No playlists yet";
+  }
+
+  if (playlistForm && !playlistForm.dataset.ready) {
+    playlistForm.dataset.ready = "true";
+    playlistForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      createPlaylist(playlistNameInput.value);
+      playlistNameInput.value = "";
+      renderHomePage();
+    });
+  }
+
+  if (!playlists.length) {
+    playlistList.innerHTML = `<div class="empty-state panel-like-empty"><h3>No playlists yet.</h3><p>Create a playlist to group your quizzes together.</p></div>`;
+    return;
+  }
+
+  playlistList.innerHTML = playlists.map((playlist) => {
+    const playlistQuizzes = playlist.quizIds.map(getQuizById).filter(Boolean);
+    const playlistQuizIds = new Set(playlistQuizzes.map((quiz) => quiz.id));
+    const addableQuizzes = libraryQuizzes.filter((quiz) => !playlistQuizIds.has(quiz.id));
+    const progress = getOverallProgress(playlistQuizzes);
+
+    return `
+      <article class="playlist-card">
+        <div class="playlist-card-head">
+          <div>
+            <h3>${escapeHtml(playlist.name)}</h3>
+            <p>${playlistQuizzes.length} quiz${playlistQuizzes.length === 1 ? "" : "zes"} • ${progress.percentage}% complete</p>
+          </div>
+          <button class="ghost-button danger-button small-button" type="button" data-delete-playlist="${playlist.id}">Delete</button>
+        </div>
+
+        <div class="playlist-quiz-list">
+          ${playlistQuizzes.length ? playlistQuizzes.map((quiz) => `
+            <div class="playlist-quiz-row">
+              <a href="quiz.html?id=${encodeURIComponent(quiz.id)}">${escapeHtml(quiz.title)}</a>
+              <button class="ghost-button small-button" type="button" data-remove-playlist-quiz="${playlist.id}" data-quiz-id="${quiz.id}">Remove</button>
+            </div>
+          `).join("") : `<div class="empty-state">No quizzes in this playlist yet.</div>`}
+        </div>
+
+        <div class="playlist-add-row">
+          <select data-playlist-select="${playlist.id}" ${addableQuizzes.length ? "" : "disabled"}>
+            <option value="">${addableQuizzes.length ? "Add a quiz from your library" : "All library quizzes added"}</option>
+            ${addableQuizzes.map((quiz) => `<option value="${quiz.id}">${escapeHtml(quiz.title)}</option>`).join("")}
+          </select>
+          <button class="primary-link small-button" type="button" data-add-playlist-quiz="${playlist.id}" ${addableQuizzes.length ? "" : "disabled"}>Add</button>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  playlistList.querySelectorAll("[data-delete-playlist]").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!window.confirm("Delete this playlist? The quizzes will stay in your library.")) return;
+      deletePlaylist(button.dataset.deletePlaylist);
+      renderHomePage();
+    });
+  });
+
+  playlistList.querySelectorAll("[data-remove-playlist-quiz]").forEach((button) => {
+    button.addEventListener("click", () => {
+      removeQuizFromPlaylist(button.dataset.removePlaylistQuiz, button.dataset.quizId);
+      renderHomePage();
+    });
+  });
+
+  playlistList.querySelectorAll("[data-add-playlist-quiz]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const select = playlistList.querySelector(`[data-playlist-select="${button.dataset.addPlaylistQuiz}"]`);
+      if (!select || !select.value) return;
+      addQuizToPlaylist(button.dataset.addPlaylistQuiz, select.value);
+      renderHomePage();
+    });
+  });
+}
+
 function renderHomePage() {
   const categoryGrid = document.getElementById("categoryGrid");
   const progressText = document.getElementById("overallProgressText");
@@ -403,6 +565,7 @@ function renderHomePage() {
   if (!categoryGrid) return;
 
   const libraryQuizzes = getLibraryQuizzes();
+  renderHomePlaylists(libraryQuizzes);
   const libraryIdSet = new Set(libraryQuizzes.map((quiz) => quiz.id));
   const recentPlays = (Array.isArray(getStats().__recentPlays) ? getStats().__recentPlays : [])
     .filter((item) => libraryIdSet.has(item.quizId))
