@@ -19,9 +19,11 @@ async function loadSharedQuizzes() {
       ...doc.data(),
       id: doc.id
     }));
+    return true;
   } catch (error) {
     console.error("Could not load shared quizzes:", error);
     sharedQuizzes = [];
+    return false;
   }
 }
 
@@ -1241,17 +1243,27 @@ function renderQuizPage() {
 }
 
 async function initPage() {
-  await Promise.all([loadUserData(), loadSharedQuizzes()]);
+  await loadUserData();
 
   syncAutoAddedQuizzes();
 
   const page = document.body.dataset.page;
 
-  if (page === "home") renderHomePage();
-  if (page === "marketplace") renderMarketplacePage();
-  if (page === "library") renderLibraryPage();
-  if (page === "category") renderCategoryPage();
-  if (page === "quiz") renderQuizPage();
+  function renderCurrentPage() {
+    if (page === "home") renderHomePage();
+    if (page === "marketplace") renderMarketplacePage();
+    if (page === "library") renderLibraryPage();
+    if (page === "category") renderCategoryPage();
+    if (page === "quiz") renderQuizPage();
+  }
+
+  renderCurrentPage();
+
+  loadSharedQuizzes().then((sharedLoaded) => {
+    if (!sharedLoaded) return;
+    syncAutoAddedQuizzes();
+    renderCurrentPage();
+  });
 }
 
 initPage();
